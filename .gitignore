@@ -8,3 +8,5 @@ ethereum/build/
 .idea
 .vscode
 .nbproject
+
+/src/**/*.js
