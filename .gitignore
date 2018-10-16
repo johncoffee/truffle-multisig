@@ -1,0 +1,10 @@
+node_modules/
+
+# build artifacts
+dist/
+ethereum/build/
+
+# editor settings
+.idea
+.vscode
+.nbproject
