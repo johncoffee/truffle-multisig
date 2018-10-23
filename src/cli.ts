@@ -147,13 +147,18 @@ handlers.set(Cmd.register, register)
 handlers.set(Cmd.list, async () => {
   const cmdTpl = '$ node/cli.js'
 
-  console.log("You can sign the following:")
-  console.log(" 1. Hello world")
-  console.log(" 2. Test Contract")
+  console.log(`${greenBright('Active')} contracts:`)
+  console.log("  TestContract1 ")
+  console.log("    0xe0f617ab0d5baec7ca441d6840a7fd16d4051550")
+  console.log("  TestContract2 ")
+  console.log("    0x7254747f127cc447808aaffb5910d963e1a92688")
+  console.log()
+  console.log(`${blue('Drafts')}, ready to be signed and activated:`)
+  console.log(" - Test3")
   console.log('')
-  console.log('See all contracts using --see=all')
   console.log(blue(`Proceed by ${cmdTpl} sign <contract id>`))
   console.log('')
+
 })
 handlers.set(Cmd.ls, handlers.get(Cmd.list) as Handler)
 
