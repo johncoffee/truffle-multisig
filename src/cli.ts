@@ -27,12 +27,13 @@ enum Cmd {
   list,
   ls,
 
+  register,
+
   mk,
   create,
 
   sign,
   tx,
-  seed,
 }
 
 const subcommand:Cmd = Cmd[argv._[0]] as any || Cmd.help
@@ -53,14 +54,16 @@ async function Help() {
   console.log('  use -v to show debug output')
 }
 
-async function seed () {
+async function register () {
+  console.log("Registering '" + argv.name + "' as Service Provider ...")
+
   const newSeed = keystore.generateRandomSeed()
   retrieveKeystore(newSeed, '')
     .then(([ks, keyFromPw]) => {
       ks.generateNewAddress(keyFromPw, 1)
       const [signingAddr] = ks.getAddresses()
-      console.log(newSeed)
-      console.log(signingAddr)
+      console.log("Address: "+signingAddr)
+      console.log("Seed:    "+newSeed)
     })
 
 }
@@ -137,15 +140,16 @@ const handlers = new Map<Cmd, Handler>()
 
 handlers.set(Cmd.tx, tx)
 handlers.set(Cmd.help, Help)
-handlers.set(Cmd.seed, seed)
 handlers.set(Cmd.sign, sign)
+
+handlers.set(Cmd.register, register)
 
 handlers.set(Cmd.list, async () => {
   const cmdTpl = '$ node/cli.js'
 
   console.log("You can sign the following:")
   console.log(" 1. Hello world")
-  console.log(" 2. Aftale om samarbejde")
+  console.log(" 2. Test Contract")
   console.log('')
   console.log('See all contracts using --see=all')
   console.log(blue(`Proceed by ${cmdTpl} sign <contract id>`))

@@ -7,6 +7,10 @@ export function validate(subcommand,argv) {
       console.assert(createName, `create requires a source file, eg. create "HelloWorld.sol" or -i "HelloWorld.sol"`)
       break
 
+    case 'register':
+      console.assert(argv.name, `register requires name, eg. --name ServiceProvider`)
+      break
+
     case "ls":
     case "list":
       break
