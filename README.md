@@ -7,7 +7,7 @@
 
 Use NodeJS to `node dist/cli.js` - you might need to [install dependencies](#Installation and dependencies).
 
-See a tutorial of doing a [two-party contract in the docs](docs/two-party-contract.md).
+See a tutorial of doing a [two-party contract in the docs](./docs/two-party-contract.md).
 
 
 ### Installation and dependencies
