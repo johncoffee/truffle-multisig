@@ -1,30 +1,23 @@
 
 
-# Guide
-
-Try `node dist/cli.js`
-
-It should achieve signing a contract with 2 signatures.
+#### This code base has NOT be reviewed by security experts and MUST therefore NOT be used, unless you are a) a security expert or b) l33t h4x0r.
 
 
-Steps 
+# Usage
 
-1. Deploy a contract `node cli.js create hello.sol` 
+Use NodeJS to `node dist/cli.js` - you might need to [install dependencies](#Installation and dependencies).
 
-    Create contract, save signing request as file
+See a tutorial of doing a [two-party contract in the docs](docs/two-party-contract.md).
 
-2. Sign the tha state change tx with 2 wallets
 
-    `node cli.js sign -s "pretty harsh depart gloom whip quit stable turtle question supreme rather problem" -n 0 0x213 -m 0x333 -w 0x81213`
-    
-    gives
-    
-    `{"v": "0x123", "s": "0x123", "r": "0x123"}`
-    
-3. Call the multi sig
+### Installation and dependencies
 
-    `node cli.js tx -m register '{"v": "0x123", "s": "0x123", "r": "0x123"} {"v": "0x123", "s": "0x123", "r": "0x123"}'`
-    
+ 1.  We'll need NodeJS and npm 
+ 2.  Install the Truffle framework, and Ganache test-blockchain 
+     `npm install -g ganache truffle`
+     (access to a local or remote Ethereum node is not required)
+ 3.  Download this codebase, and do a `npm install`
 
-### Windows support
-Yes. Please use [cmder](http://cmder.net/)
+#### Windows support
+
+Yes. Please use [cmder](http://cmder.net/) as terminal emulator.
