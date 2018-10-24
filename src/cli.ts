@@ -15,7 +15,11 @@ console.assert(txutils, 'lightwallet.txutils should be a thing');
 const {yellow, red, blue, greenBright} = chalk
 
 const argv = minimist(process.argv.slice(2), {
-  string: ['m', 'multisig', 'd', 'dest', 'from'] // always treat these as strings
+  string: [
+    'm', 'multisig',
+    'd', 'dest',
+    'from', 'f'
+  ], // always treat these as strings
 })
 if (argv.v) {
   console.debug(argv)
@@ -82,7 +86,7 @@ async function tx () {
   const multisigInstance:any = new web3.eth.Contract(require('../ethereum/build/contracts/SimpleMultiSig').abi as ContractAbi,
     multisigAddr2,
     {
-      from: '0x2153f712f208b8698312cd2737525aefa2de7bb9',
+      from: argv.from || argv.f,
     })
 
   // Web3 use call because we just reading
