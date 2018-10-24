@@ -23,15 +23,10 @@ if (argv.v) {
 
 enum Cmd {
   help,
-
-  list,
-  ls,
-
-  register,
-
-  mk,
-  create,
-
+  list, ls,
+  expenses, xp,
+  register, sp,
+  create, mk,
   sign,
   tx,
 }
@@ -143,6 +138,19 @@ handlers.set(Cmd.help, Help)
 handlers.set(Cmd.sign, sign)
 
 handlers.set(Cmd.register, register)
+handlers.set(Cmd.sp, register)
+
+handlers.set(Cmd.expenses, async () => {
+  console.log("Expense report")
+  console.log("")
+  console.log("  Contract 0x12...Qm has 4 recorded expenses")
+  console.log("    20   kaffe               0x33..mq")
+  console.log("    44   kaffe               0xf2..ef")
+  console.log("    750  DSB kontrol afgift  0xaf..01")
+  console.log("    22,5 kaffe               0x09..0a")
+})
+handlers.set(Cmd.xp, handlers.get(Cmd.expenses) as Handler)
+
 
 handlers.set(Cmd.list, async () => {
   const cmdTpl = '$ node/cli.js'
