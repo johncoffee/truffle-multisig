@@ -11,8 +11,8 @@ contract ComplexContract is Owned {
 
     bytes32 public constant terms = 0x111;
 
-    uint8 public constant startupFee = 2000 wei;
-    uint8 public constant totalPrice = 30000 wei;
+    uint public constant startupFee = 2000 wei;
+    uint public constant totalPrice = 30000 wei;
 
     address private paymentsTo = 0x001;
 
