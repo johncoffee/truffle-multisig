@@ -162,7 +162,7 @@ handlers.set(Cmd.list, async () => {
   console.log(`${greenBright('Active')} contracts:`)
   console.log("  TestContract1 ")
   console.log("    0xe0f617ab0d5baec7ca441d6840a7fd16d4051550")
-  console.log("  TestContract2 ")
+  console.log("  ComplexContract ")
   console.log("    0x7254747f127cc447808aaffb5910d963e1a92688")
   console.log()
   console.log(`${blue('Drafts')}, ready to be signed and activated:`)

@@ -1,16 +1,16 @@
 const SimpleMultiSig = artifacts.require("SimpleMultiSig")
-const TestContract2 = artifacts.require("TestContract2") // contract name, not solidity file name
+const SimpleContract = artifacts.require("SimpleContract")
 
 module.exports = function(deployer, network, accounts) {
   const owners = [
-    accounts[0],
-    '0x86bb7242fdb7c4b809497f48855a88823ba5255e',
+    '', // accounts[0] // perhaps
+    '',
   ]
-  owners.sort()
+  owners.sort() // sorted, as required by the multisig logic
   const threshold = owners.length // all owners must sign
 
   // seems like async/await not really supported, we have to follow this API
   deployer
     .then(() => deployer.deploy(SimpleMultiSig, threshold, owners))
-    .then((simpleMultiSigInstance) => deployer.deploy(TestContract2, simpleMultiSigInstance.address)) // pass address to the constructor
+    .then((simpleMultiSigInstance) => deployer.deploy(SimpleContract, simpleMultiSigInstance.address)) // pass address to the constructor
 }
