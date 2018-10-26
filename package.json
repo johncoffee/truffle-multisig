@@ -13,12 +13,15 @@
     "web3": "1.0.0-beta.36"
   },
   "devDependencies": {
-    "@types/eth-lightwallet": "3.0.0",
-    "@types/minimist": "1.2.0",
-    "@types/node": "10.12.0",
     "@types/chai": "4.1.4",
+    "@types/eth-lightwallet": "3.0.0",
     "@types/fs-extra": "5.0.4",
+    "@types/minimist": "1.2.0",
     "@types/mocha": "5.2.5",
+    "@types/node": "10.12.0",
+    "ganache-cli": "6.1.8",
+    "truffle-typings": "1.0.4",
+    "typechain": "0.3.8",
     "typescript": "3.1.3",
     "web3x": "1.1.0"
   },
@@ -27,10 +30,9 @@
     "test-repo": "npm run clear && npm i && npm run build && npm test",
     "test": "cd ethereum; truffle test",
     "build": "cd ethereum; truffle compile && npm run type-contracts && npm run compile-tests",
-    "ganache": "node node_modules/ganache-cli/build/cli.node.js -p 7545",
+    "ganache": "node node_modules/ganache-cli/build/cli.node.js --port 7545 --networkId 1337",
     "type-contracts": "cd ethereum; node ../node_modules/typechain/dist/cli/cli.js --target=truffle --outDir=build/contract-interfaces \"./build/**/*.json\"",
-    "compile-tests": "node node_modules/typescript/bin/tsc --project ./ethereum/ -p ./tsconfig.json",
-    "compile-tools": "node node_modules/typescript/bin/tsc --project ./tools/ -p ./tsconfig.json"
+    "compile-tests": "node node_modules/typescript/bin/tsc --project ./ethereum/test -p ./ethereum/tsconfig.json"
   },
   "author": "",
   "license": "ISC"
