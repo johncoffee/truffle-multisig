@@ -10,3 +10,4 @@ ethereum/build/
 .nbproject
 
 /src/**/*.js
+/ethereum/test/**/*.js
