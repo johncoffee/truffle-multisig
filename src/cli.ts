@@ -1,12 +1,12 @@
 import minimist = require('minimist')
 import chalk from 'chalk'
 import { validate } from './validate-input.js'
-import { createSig, retrieveKeystore } from './sigTools.js'
+import { createSig, retrieveKeystore, txObj } from './sigTools.js'
 import { keystore } from 'eth-lightwallet'
 import * as lightwallet from 'eth-lightwallet'
 import {BigNumber} from 'bignumber.js'
 import { Web3 as Web3Class } from 'web3x'
-import { ContractAbi } from 'web3x/contract'
+import { Contract, ContractAbi } from 'web3x/contract'
 const Web3 = require('web3')
 
 const txutils = (lightwallet as any).txutils // type washing
@@ -102,31 +102,36 @@ async function tx () {
 async function sign () {
   const seedPhrase = argv.s || argv.seed
   const password = argv.p || argv.password || ''
-
-  const nonce:number = [argv.n, argv.nonce].find(val => val !== undefined)
-  console.assert(nonce != undefined, "should have nonce")
-
   const multisigAddr = argv.m || argv.multisig || require('../ethereum/build/contracts/SimpleMultiSig.json').networks['1337'].address // dev stuff
-  const destAddr = argv.d || argv.dest || require('../ethereum/build/contracts/TestContract1.json').networks['1337'].address // demo stuff
 
-  retrieveKeystore(seedPhrase, password)
-    .then(([ks, keyFromPw]) => {
-      ks.generateNewAddress(keyFromPw, 1)
-      const [signingAddr] = ks.getAddresses()
-      let s
-      try {
-        s = createSig(ks,signingAddr, keyFromPw, multisigAddr, nonce, destAddr)
-      }
-      catch (e) {
-        console.error(red(e.toString()))
-        console.error(e)
-      }
-      if (s) {
-        console.log("Signature:")
-        console.log(JSON.stringify(s))
-      }
-    }, err => console.error)
-    .catch(err => console.error)
+  const web3 = new Web3('http://localhost:7545') as Web3Class
+  const multisigInstance: Contract = new web3.eth.Contract(require('../ethereum/build/contracts/SimpleMultiSig').abi as ContractAbi,
+    multisigAddr,
+    {
+      from: argv.from || argv.f,
+    })
+
+  multisigInstance.methods.nonce().call().then(async nonce => {
+    const destAddr = argv.d || argv.dest || require('../ethereum/build/contracts/TestContract1.json').networks['1337'].address // demo stuff
+
+    retrieveKeystore(seedPhrase, password)
+      .then(([ks, keyFromPw]) => {
+        ks.generateNewAddress(keyFromPw, 1)
+        const [signingAddr] = ks.getAddresses()
+        let s:txObj
+        try {
+          s = createSig(ks, signingAddr, keyFromPw, multisigAddr, nonce, 'nextState', destAddr)
+          console.log('Signature:')
+          console.log(JSON.stringify(s))
+        }
+        catch (e) {
+          console.error(red(e.toString()))
+          console.error(e)
+        }
+      })
+      .catch(err => console.error)
+
+  })
 }
 
 

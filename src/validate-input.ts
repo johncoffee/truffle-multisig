@@ -16,7 +16,6 @@ export function validate(subcommand,argv) {
       break
 
     case "sign":
-      // const inputId = argv._[1] || argv.i || argv.id
       const seedPhrase = argv.s || argv.seed
       // const password = argv.p || argv.password
       const multisigAddr = argv.m || argv.multisig
@@ -24,7 +23,6 @@ export function validate(subcommand,argv) {
 
       // console.assert(password, "sign requires --password (-p)")
       console.assert(seedPhrase, "sign requires --seedphrase -s")
-      console.assert(!(argv.n == undefined && argv.nonce == undefined), "sign requires --nonce -n")
 
       // can be omitted
       // console.assert(destAddr, "sign requires --dest -d")

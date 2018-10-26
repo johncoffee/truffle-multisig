@@ -7,6 +7,7 @@ const txutils = (lightwallet as any).txutils // type washing
 console.assert(txutils, 'lightwallet.txutils should be a thing');
 
 // keystore
+export type txObj = {sigV: number, sigR: string, sigS: string}
 
 export function retrieveKeystore (seedPhrase:string, password:string = ''):Promise<[keystore, Uint8Array]> {
   return new Promise(resolve => {
@@ -23,13 +24,13 @@ export function retrieveKeystore (seedPhrase:string, password:string = ''):Promi
   })
 }
 
-export function createSig (ks, signingAddr, keyFromPw, multisigContractAddr, nonce:number, destinationAddr, value:number = 0) {
+export function createSig (ks:keystore, signingAddr:string, keyFromPw:Uint8Array, multisigContractAddr:string, nonce:number, destinationMethod:string, destinationAddr:string, destinationValue:number = 0):txObj {
   const nonceBn:BigNumber = new BigNumber(nonce, 10) // typeguard
-  const valueBn:BigNumber = new BigNumber(value, 10) // typeguard
+  const valueBn:BigNumber = new BigNumber(destinationValue, 10) // typeguard
   console.assert(multisigContractAddr.substr(0,2) === "0x", "multisigAddr should be in hex format",multisigContractAddr)
   console.assert(destinationAddr.substr(0,2) === "0x", "destinationAddr should be in hex format",destinationAddr)
 
-  const data = txutils._encodeFunctionTxData('nextState', [], []);// sending data doesn't work https://github.com/ethereum/solidity/issues/2884
+  const data = txutils._encodeFunctionTxData(destinationMethod, [], []);// sending data doesn't work https://github.com/ethereum/solidity/issues/2884
 
   let input = '0x19' + '00'
     + multisigContractAddr.slice(2)
@@ -48,5 +49,5 @@ export function createSig (ks, signingAddr, keyFromPw, multisigContractAddr, non
   let sigR = '0x' + sig.r.toString('hex')
   let sigS = '0x' + sig.s.toString('hex')
 
-  return {sigV: sigV, sigR: sigR, sigS: sigS}
+  return <txObj>{sigV: sigV, sigR: sigR, sigS: sigS}
 }
