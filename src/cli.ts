@@ -55,13 +55,12 @@ async function Help() {
 
 async function register () {
   const newSeed = keystore.generateRandomSeed()
-  retrieveKeystore(newSeed, '')
-    .then(([ks, keyFromPw]) => {
-      ks.generateNewAddress(keyFromPw, 1)
-      const [signingAddr] = ks.getAddresses()
-      console.log("Address: "+signingAddr)
-      console.log("Seed:    "+newSeed)
-    })
+  const [ks, keyFromPw] = await retrieveKeystore(newSeed, '')
+
+  ks.generateNewAddress(keyFromPw, 1)
+  const [signingAddr] = ks.getAddresses()
+  console.log("Address: "+signingAddr)
+  console.log("Seed:    "+newSeed)
 
 }
 async function tx () {
@@ -113,22 +112,19 @@ async function sign () {
   multisigInstance.methods.nonce().call().then(async nonce => {
     const destAddr = argv.d || argv.dest || require('../ethereum/build/contracts/TestContract1.json').networks['1337'].address // demo stuff
 
-    retrieveKeystore(seedPhrase, password)
-      .then(([ks, keyFromPw]) => {
-        ks.generateNewAddress(keyFromPw, 1)
-        const [signingAddr] = ks.getAddresses()
-        let s:txObj
-        try {
-          s = createSig(ks, signingAddr, keyFromPw, multisigAddr, nonce, 'nextState', destAddr)
-          console.log('Signature:')
-          console.log(JSON.stringify(s))
-        }
-        catch (e) {
-          console.error(red(e.toString()))
-          console.error(e)
-        }
-      })
-      .catch(err => console.error)
+    const [ks, keyFromPw] = await retrieveKeystore(seedPhrase, password)
+    ks.generateNewAddress(keyFromPw, 1)
+    const [signingAddr] = ks.getAddresses()
+    let s:txObj
+    try {
+      s = createSig(ks, signingAddr, keyFromPw, multisigAddr, nonce, 'nextState', destAddr)
+      console.log('Signature:')
+      console.log(JSON.stringify(s))
+    }
+    catch (e) {
+      console.error(red(e.toString()))
+      console.error(e)
+    }
 
   })
 }
