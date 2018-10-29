@@ -54,8 +54,6 @@ async function Help() {
 }
 
 async function register () {
-  console.log("Registering '" + argv.name + "' as Service Provider ...")
-
   const newSeed = keystore.generateRandomSeed()
   retrieveKeystore(newSeed, '')
     .then(([ks, keyFromPw]) => {

@@ -8,7 +8,7 @@ export function validate(subcommand,argv) {
       break
 
     case 'register':
-      console.assert(argv.name, `register requires name, eg. --name ServiceProvider`)
+      // console.assert(argv.name, `register requires name, eg. --name ServiceProvider`)
       break
 
     case "ls":
