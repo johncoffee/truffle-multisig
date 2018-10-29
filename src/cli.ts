@@ -68,14 +68,15 @@ async function tx () {
   const sig1 = JSON.parse(argv._[1]) // {"sigV":28,"sigR":"0x7d223c507acf17887340f364f7cf910ec54dfb2f10e08ce5ddc3d60bf9b221b3","sigS":"0x1bdd9f4ba9afd5466b59010746caf55dd396769a1c8a8c001e3ee693276af1d3"}
   const sig2 = JSON.parse(argv._[2]) // {"sigV":28,"sigR":"0x7d223c507acf17887340f364f7cf910ec54dfb2f10e08ce5ddc3d60bf9b221b3","sigS":"0x1bdd9f4ba9afd5466b59010746caf55dd396769a1c8a8c001e3ee693276af1d3"}
 
-  const sigsOrdered:any = [sig1, sig2] // .sort() // should have been sorted based on sender address
+  const sigsOrdered:txObj[] = [sig1, sig2] // .sort() // should have been sorted based on sender address
+  // validate all input
+  sigsOrdered.forEach(sig1 => console.assert(sig1.sigV && sig1.sigR && sig1.sigS, "missing V, R or S", sig1))
+
   const sigs = {
     sigV: sigsOrdered.map(sig => sig.sigV),
     sigR: sigsOrdered.map(sig => sig.sigR),
     sigS: sigsOrdered.map(sig => sig.sigS),
   }
-  console.assert(sigs.sigV[0], "missing a V", sigs)
-  console.assert(sigs.sigS[1], "missing a S")
 
   const destAddr2     = argv.d || argv.dest     || require('../ethereum/build/contracts/TestContract1.json').networks['1337'].address // demo stuff
   const multisigAddr2 = argv.m || argv.multisig || require('../ethereum/build/contracts/SimpleMultiSig.json').networks['1337'].address // dev stuff
