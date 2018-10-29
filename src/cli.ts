@@ -77,12 +77,15 @@ async function tx () {
     sigS: sigsOrdered.map(sig => sig.sigS),
   }
 
-  const destAddr2     = argv.d || argv.dest     || require('../ethereum/build/contracts/TestContract1.json').networks['1337'].address // demo stuff
-  const multisigAddr2 = argv.m || argv.multisig || require('../ethereum/build/contracts/SimpleMultiSig.json').networks['1337'].address // dev stuff
+  const destAddress     = argv.d || argv.dest     || require('../ethereum/build/contracts/SimpleContract.json').networks['1337'].address // demo stuff
+  const multisigAddress = argv.m || argv.multisig || require('../ethereum/build/contracts/SimpleMultiSig.json').networks['1337'].address // dev stuff
+
+  console.assert(destAddress, "did not find dest address")
+  console.assert(multisigAddress, "did not find MultiSig address")
 
   const web3 = new Web3('http://localhost:7545') as Web3Class
   const multisigInstance:any = new web3.eth.Contract(require('../ethereum/build/contracts/SimpleMultiSig').abi as ContractAbi,
-    multisigAddr2,
+    multisigAddress,
     {
       from: argv.from || argv.f,
     })
@@ -93,7 +96,7 @@ async function tx () {
 
     console.log('nonce ' + nonce);
     // send transaction here, not using .call!
-    const res = await multisigInstance.methods.execute(sigs.sigV, sigs.sigR, sigs.sigS, destAddr2, nonce, data).send()
+    const res = await multisigInstance.methods.execute(sigs.sigV, sigs.sigR, sigs.sigS, destAddress, nonce, data).send()
   })
 }
 
