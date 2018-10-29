@@ -113,7 +113,7 @@ async function sign () {
     })
 
   multisigInstance.methods.nonce().call().then(async nonce => {
-    const destAddr = argv.d || argv.dest || require('../ethereum/build/contracts/TestContract1.json').networks['1337'].address // demo stuff
+    const destAddr = argv.d || argv.dest || require('../ethereum/build/contracts/SimpleContract.json').networks['1337'].address // demo stuff
 
     const [ks, keyFromPw] = await retrieveKeystore(seedPhrase, password)
     ks.generateNewAddress(keyFromPw, 1)
