@@ -7,7 +7,7 @@ import * as lightwallet from 'eth-lightwallet'
 import {BigNumber} from 'bignumber.js'
 import { Web3 as Web3Class } from 'web3x'
 import { Contract, ContractAbi } from 'web3x/contract'
-import { getContracts } from './files.js'
+import { getDeployedContracts } from './files.js'
 const Web3 = require('web3')
 
 const txutils = (lightwallet as any).txutils // type washing
@@ -161,15 +161,12 @@ handlers.set(Cmd.xp, handlers.get(Cmd.expenses) as Handler)
 
 
 handlers.set(Cmd.list, async () => {
-  const allContracts = await getContracts()
-  const cmdTpl = '$ node/cli.js'
   const networkId = argv.networkId || '1337'
+  const allContracts = await getDeployedContracts(networkId)
 
   console.log(`CONTRACTS OVERVIEW (network ${networkId})`)
   console.log("")
   allContracts
-    .filter(contract => contract.contractName !== "Migrations") // truffle defaults is discarded
-    .filter(contract => !!contract.networks[networkId] && Object.keys(contract.networks[networkId]).length > 0) // truffle defaults is discarded
     .map(contract => ({
       name: `  ${contract.contractName}`,
       address: `    ${contract.networks[networkId].address}`,

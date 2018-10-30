@@ -11,7 +11,7 @@ const contractsPath = join(__dirname, "../ethereum/build/contracts/")
 
 type json = {[k :string]: any}
 
-export async function getContracts():Promise<json[]> {
+export async function getDeployedContracts(networkId:string):Promise<json[]> {
   return new Promise<json[]>(resolve => {
     const reads = <Promise<any>[]>[]
 
@@ -23,11 +23,14 @@ export async function getContracts():Promise<json[]> {
       })
       .on('end', async () => {
         const items:json[] = await Promise.all(reads)
-        resolve(items)
+
+        const filtered = items
+          .filter(contract => contract.contractName !== 'Migrations'   // filter out Truffle migration tracking
+            && contract.networks[networkId]
+            && Object.keys(contract.networks[networkId]).length > 0)
+
+        resolve(filtered)
       })
   })
 }
 
-if (!module.parent) {
-  getContracts().then(res => console.log(res.map(item => item.networks)))
-}
