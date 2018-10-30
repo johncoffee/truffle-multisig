@@ -7,6 +7,7 @@ import * as lightwallet from 'eth-lightwallet'
 import {BigNumber} from 'bignumber.js'
 import { Web3 as Web3Class } from 'web3x'
 import { Contract, ContractAbi } from 'web3x/contract'
+import { getContracts } from './files.js'
 const Web3 = require('web3')
 
 const txutils = (lightwallet as any).txutils // type washing
@@ -160,21 +161,22 @@ handlers.set(Cmd.xp, handlers.get(Cmd.expenses) as Handler)
 
 
 handlers.set(Cmd.list, async () => {
+  const allContracts = await getContracts()
   const cmdTpl = '$ node/cli.js'
+  const networkId = argv.networkId || '1337'
 
-  console.log(`${greenBright('Active')} contracts:`)
-  console.log("  TestContract1 ")
-  console.log("    0xe0f617ab0d5baec7ca441d6840a7fd16d4051550")
-  console.log("  ComplexContract ")
-  console.log("    0x7254747f127cc447808aaffb5910d963e1a92688")
-  console.log()
-  console.log(`${blue('Drafts')}, ready to be signed and activated:`)
-  console.log(" - Test3")
-  console.log('')
-  console.log(blue(`Proceed by ${cmdTpl} sign <contract id>`))
-  console.log('')
-
+  console.log(`CONTRACTS OVERVIEW (network ${networkId})`)
+  console.log("")
+  allContracts
+    .filter(contract => contract.contractName !== "Migrations") // truffle defaults is discarded
+    .filter(contract => !!contract.networks[networkId] && Object.keys(contract.networks[networkId]).length > 0) // truffle defaults is discarded
+    .map(contract => ({
+      name: `  ${contract.contractName}`,
+      address: `    ${contract.networks[networkId].address}`,
+    }) )
+    .forEach(vm => Object.values(vm).forEach(val => console.log(val) ))
 })
+
 handlers.set(Cmd.ls, handlers.get(Cmd.list) as Handler)
 
 handlers.set(Cmd.create, async () => {
