@@ -9,6 +9,8 @@ module.exports = function(deployer, network, accounts) {
   owners.sort() // sorted, as required by the multisig logic
   const threshold = owners.length // all owners must sign
 
+  console.assert(owners.filter(val => !val).length === 0, "missing some of the owners!")
+
   // seems like async/await not really supported, we have to follow this API
   deployer
     .then(() => deployer.deploy(SimpleMultiSig, threshold, owners))
