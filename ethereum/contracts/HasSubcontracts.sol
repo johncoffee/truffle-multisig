@@ -25,7 +25,7 @@ contract HasSubcontracts is ICommonState, Owned {
         initiator = msg.sender; // note we've assumed this is msg.sender!
     }
 
-    function add(ICommonState _add) external serviceProviderOnly {
+    function add(ICommonState _add) external {
         require(msg.sender == initiator, "Sender was not initiator");
         subcontract = _add;
     }
