@@ -1,23 +1,20 @@
-import { ComplexContractInstance, SimpleMultiSigInstance } from '../build/contract-interfaces'
+import { ComplexContractInstance } from '../build/contract-interfaces'
+
+declare const web3:any;
 
 const ComplexContract = artifacts.require("ComplexContract")
-const SimpleMultiSig = artifacts.require("SimpleMultiSig")
 
 contract('ComplexContract', ([deployer]) => {
+  let instance:ComplexContractInstance
+
+  const owner:string = deployer
+
+  beforeEach(async () => {
+    const paymentsTo = '0xa544f13c3d3f59c01ef2a6f1c0f302fe1fc69458'
+    instance = await ComplexContract.new(owner, paymentsTo)
+  })
 
   describe('public fields ', () => {
-
-    let instanceSimpleMultiSig :SimpleMultiSigInstance
-    let instance :ComplexContractInstance
-
-    beforeEach(async () => {
-      const owners = [
-        '0x86bb7242fdb7c4b809497f48855a88823ba5255e', deployer,
-      ]
-      owners.sort()
-      instanceSimpleMultiSig = await SimpleMultiSig.new(2, owners)
-      instance = await ComplexContract.new(instanceSimpleMultiSig.address)
-    })
 
     it("should have a state", async () => {
       const state = await instance.state()
@@ -40,6 +37,39 @@ contract('ComplexContract', ([deployer]) => {
     })
   })
 
+  describe('goToNextState()' ,() => {
+
+    it("should through states 2-3", async () => {
+
+      const state1 = await instance.state()
+      assert.isTrue(state1.eq('1', 10), 'should start in state 1')
+
+      const paymentsTo = await instance.paymentsTo()
+
+      const startupFee = await instance.startupFee()
+      await web3.eth.sendTransaction({
+        from: deployer,
+        to: paymentsTo,
+        value: web3.toWei(startupFee.toString(), 'wei'),
+      })
+
+      await instance.goToNextState({from: owner})
+
+      const state2 = await instance.state()
+      assert.isTrue(state2.eq('2'), 'should start in state 2')
+
+      const totalPrice = await instance.totalPrice()
+      await web3.eth.sendTransaction({
+        from: deployer,
+        to: paymentsTo,
+        value: web3.toWei(totalPrice.minus(startupFee).toString(), 'wei'),
+      })
+      await instance.goToNextState({from: owner})
+
+      const state3 = await instance.state()
+      assert.isTrue(state3.eq('3'), 'should start in state 3')
+    })
+  })
 })
 
 export {}

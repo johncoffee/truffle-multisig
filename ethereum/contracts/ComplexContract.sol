@@ -14,7 +14,7 @@ contract ComplexContract is Owned {
     uint public constant startupFee = 2000 wei;
     uint public constant totalPrice = 30000 wei;
 
-    address private paymentsTo;
+    address public paymentsTo;
 
     constructor(address _owner, address _paymentsTo) public {
         owner = _owner;
