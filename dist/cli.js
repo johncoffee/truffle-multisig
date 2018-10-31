@@ -126,14 +126,11 @@ handlers.set(Cmd.expenses, async () => {
 });
 handlers.set(Cmd.xp, handlers.get(Cmd.expenses));
 handlers.set(Cmd.list, async () => {
-    const allContracts = await files_js_1.getContracts();
-    const cmdTpl = '$ node/cli.js';
     const networkId = argv.networkId || '1337';
+    const allContracts = await files_js_1.getDeployedContracts(networkId);
     console.log(`CONTRACTS OVERVIEW (network ${networkId})`);
     console.log("");
     allContracts
-        .filter(contract => contract.contractName !== "Migrations") // truffle defaults is discarded
-        .filter(contract => !!contract.networks[networkId] && Object.keys(contract.networks[networkId]).length > 0) // truffle defaults is discarded
         .map(contract => ({
         name: `  ${contract.contractName}`,
         address: `    ${contract.networks[networkId].address}`,
