@@ -5,8 +5,7 @@ import './owned.sol';
 contract SimpleContract is Owned {
     uint state = 1;
 
-    constructor(address _owner) public {
-        owner = _owner;
+    constructor(address _owner) Owned(_owner) public {
     }
 
     function getState() public constant returns (uint _num) {

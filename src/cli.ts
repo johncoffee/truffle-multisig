@@ -8,6 +8,7 @@ import {BigNumber} from 'bignumber.js'
 import { Web3 as Web3Class } from 'web3x'
 import { Contract, ContractAbi } from 'web3x/contract'
 import { getDeployedContracts } from './files.js'
+import { deploy } from './deploy.js'
 const Web3 = require('web3')
 
 const txutils = (lightwallet as any).txutils // type washing
@@ -32,6 +33,7 @@ enum Cmd {
   expenses, xp,
   register, sp,
   create, mk,
+  deploy,
   sign,
   tx,
 }
@@ -175,6 +177,13 @@ handlers.set(Cmd.list, async () => {
 })
 
 handlers.set(Cmd.ls, handlers.get(Cmd.list) as Handler)
+
+handlers.set(Cmd.deploy, async () => {
+  // const createName = argv._[1] || argv.name
+  const web3 = new Web3('http://localhost:7545') as Web3Class
+  const instance = await deploy(argv.from, web3)
+  console.log('Done. ', instance)
+})
 
 handlers.set(Cmd.create, async () => {
   const createName = argv._[1] || argv.name
