@@ -7,6 +7,7 @@ const sigTools_js_1 = require("./sigTools.js");
 const eth_lightwallet_1 = require("eth-lightwallet");
 const lightwallet = require("eth-lightwallet");
 const files_js_1 = require("./files.js");
+const deploy_js_1 = require("./deploy.js");
 const Web3 = require('web3');
 const txutils = lightwallet.txutils; // type washing
 console.assert(txutils, 'lightwallet.txutils should be a thing');
@@ -32,8 +33,9 @@ var Cmd;
     Cmd[Cmd["sp"] = 6] = "sp";
     Cmd[Cmd["create"] = 7] = "create";
     Cmd[Cmd["mk"] = 8] = "mk";
-    Cmd[Cmd["sign"] = 9] = "sign";
-    Cmd[Cmd["tx"] = 10] = "tx";
+    Cmd[Cmd["deploy"] = 9] = "deploy";
+    Cmd[Cmd["sign"] = 10] = "sign";
+    Cmd[Cmd["tx"] = 11] = "tx";
 })(Cmd || (Cmd = {}));
 const subcommand = Cmd[argv._[0]] || Cmd.help;
 // assertions
@@ -138,6 +140,12 @@ handlers.set(Cmd.list, async () => {
         .forEach(vm => Object.values(vm).forEach(val => console.log(val)));
 });
 handlers.set(Cmd.ls, handlers.get(Cmd.list));
+handlers.set(Cmd.deploy, async () => {
+    // const createName = argv._[1] || argv.name
+    const web3 = new Web3('http://localhost:7545');
+    const instance = await deploy_js_1.deploy(argv.from, web3);
+    console.log('Done. ', instance);
+});
 handlers.set(Cmd.create, async () => {
     const createName = argv._[1] || argv.name;
     // const s1 = keystore.generateRandomSeed()
