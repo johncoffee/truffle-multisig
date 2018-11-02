@@ -18,6 +18,7 @@ const {yellow, red, blue, greenBright} = chalk
 
 const argv = minimist(process.argv.slice(2), {
   string: [
+    'a', 's',
     'm', 'multisig',
     'd', 'dest',
     'from', 'f'
@@ -29,6 +30,7 @@ if (argv.v) {
 
 enum Cmd {
   help,
+  add,
   list, ls,
   expenses, xp,
   register, sp,
@@ -140,6 +142,31 @@ async function sign () {
   })
 }
 
+async function add () {
+  // const mainContractAddress:string = argv.a || argv.address
+  const subcontractAddress:string = argv.s || argv.subcontract
+  // console.assert(mainContractAddress)
+  const networkId = argv.networkId || '1337'
+  console.assert(networkId)
+  console.assert(subcontractAddress)
+  console.assert(argv.from || argv.f)
+
+  const web3 = new Web3('http://localhost:7545') as Web3Class
+  const instance:any = new web3.eth.Contract(require('../ethereum/build/contracts/Sp1.json').abi as ContractAbi,
+    require('../ethereum/build/contracts/Sp1.json').networks[networkId].address,
+    {})
+
+  instance.methods.add(subcontractAddress)
+    .send({
+      from: argv.from || argv.f,
+    })
+    .then(val => {
+      instance.methods.subcontract().call().then(val => {
+        console.assert(val.toString().toLowerCase() === subcontractAddress.toLowerCase(), "Was not set correct "+red(val))
+      })
+    })
+}
+
 
 // router
 
@@ -148,6 +175,7 @@ interface Handler {
 }
 const handlers = new Map<Cmd, Handler>()
 
+handlers.set(Cmd.add, add)
 handlers.set(Cmd.tx, tx)
 handlers.set(Cmd.help, Help)
 handlers.set(Cmd.sign, sign)
