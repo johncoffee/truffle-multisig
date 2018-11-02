@@ -14,6 +14,7 @@ console.assert(txutils, 'lightwallet.txutils should be a thing');
 const { yellow, red, blue, greenBright } = chalk_1.default;
 const argv = minimist(process.argv.slice(2), {
     string: [
+        'a', 's',
         'm', 'multisig',
         'd', 'dest',
         'from', 'f'
@@ -25,17 +26,18 @@ if (argv.v) {
 var Cmd;
 (function (Cmd) {
     Cmd[Cmd["help"] = 0] = "help";
-    Cmd[Cmd["list"] = 1] = "list";
-    Cmd[Cmd["ls"] = 2] = "ls";
-    Cmd[Cmd["expenses"] = 3] = "expenses";
-    Cmd[Cmd["xp"] = 4] = "xp";
-    Cmd[Cmd["register"] = 5] = "register";
-    Cmd[Cmd["sp"] = 6] = "sp";
-    Cmd[Cmd["create"] = 7] = "create";
-    Cmd[Cmd["mk"] = 8] = "mk";
-    Cmd[Cmd["deploy"] = 9] = "deploy";
-    Cmd[Cmd["sign"] = 10] = "sign";
-    Cmd[Cmd["tx"] = 11] = "tx";
+    Cmd[Cmd["add"] = 1] = "add";
+    Cmd[Cmd["list"] = 2] = "list";
+    Cmd[Cmd["ls"] = 3] = "ls";
+    Cmd[Cmd["expenses"] = 4] = "expenses";
+    Cmd[Cmd["xp"] = 5] = "xp";
+    Cmd[Cmd["register"] = 6] = "register";
+    Cmd[Cmd["sp"] = 7] = "sp";
+    Cmd[Cmd["create"] = 8] = "create";
+    Cmd[Cmd["mk"] = 9] = "mk";
+    Cmd[Cmd["deploy"] = 10] = "deploy";
+    Cmd[Cmd["sign"] = 11] = "sign";
+    Cmd[Cmd["tx"] = 12] = "tx";
 })(Cmd || (Cmd = {}));
 const subcommand = Cmd[argv._[0]] || Cmd.help;
 // assertions
@@ -46,7 +48,11 @@ async function Help() {
     console.log(`  ${cmdTpl} [-v] <command>`);
     console.log('');
     console.log('COMMANDS');
-    console.log('  list, sign, create');
+    console.log('  ' + Object.keys(Cmd)
+        .filter(v => v.toString().length > 2 || v === "tx")
+        .filter(v => /^\d+$/.test(v) === false)
+        .sort()
+        .join(', '));
     console.log('');
     console.log('FLAGS');
     console.log('  use -v to show debug output');
@@ -111,7 +117,28 @@ async function sign() {
         }
     });
 }
+async function add() {
+    // const mainContractAddress:string = argv.a || argv.address
+    const subcontractAddress = argv.s || argv.subcontract;
+    // console.assert(mainContractAddress)
+    const networkId = argv.networkId || '1337';
+    console.assert(networkId);
+    console.assert(subcontractAddress);
+    console.assert(argv.from || argv.f);
+    const web3 = new Web3('http://localhost:7545');
+    const instance = new web3.eth.Contract(require('../ethereum/build/contracts/Sp1.json').abi, require('../ethereum/build/contracts/Sp1.json').networks[networkId].address, {});
+    instance.methods.add(subcontractAddress)
+        .send({
+        from: argv.from || argv.f,
+    })
+        .then(val => {
+        instance.methods.subcontract().call().then(val => {
+            console.assert(val.toString().toLowerCase() === subcontractAddress.toLowerCase(), "Was not set correct " + red(val));
+        });
+    });
+}
 const handlers = new Map();
+handlers.set(Cmd.add, add);
 handlers.set(Cmd.tx, tx);
 handlers.set(Cmd.help, Help);
 handlers.set(Cmd.sign, sign);
