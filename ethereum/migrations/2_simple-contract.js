@@ -3,8 +3,8 @@ const SimpleContract = artifacts.require("SimpleContract")
 
 module.exports = function(deployer, network, accounts) {
   const owners = [
-    '', // accounts[0] // perhaps
-    '',
+    accounts[0], // accounts[0] // perhaps
+    accounts[1],
   ]
   owners.sort() // sorted, as required by the multisig logic
   const threshold = owners.length // all owners must sign
