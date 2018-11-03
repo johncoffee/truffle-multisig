@@ -9,6 +9,7 @@ import { Web3 as Web3Class } from 'web3x'
 import { Contract, ContractAbi } from 'web3x/contract'
 import { getDeployedContracts } from './files.js'
 import { deploy } from './deploy.js'
+import { shorten } from './visual-helpers.js'
 const Web3 = require('web3')
 
 const txutils = (lightwallet as any).txutils // type washing
@@ -30,6 +31,7 @@ if (argv.v) {
 
 enum Cmd {
   help,
+  info,
   add,
   list, ls,
   expenses, xp,
@@ -142,6 +144,60 @@ async function sign () {
   })
 }
 
+async function info () {
+  const networkId = argv.networkId || '1337'
+  const contractAddress:string = argv.a || argv.address || require('../ethereum/build/contracts/Sp1.json').networks[networkId].address
+  // console.assert(contractAddress)
+
+  enum StateNames {
+    draft = 1,
+    active = 2,
+    terminated = 3,
+  }
+  const stateColours = new Map<StateNames, Function>()
+  stateColours.set(StateNames.draft, yellow)
+  stateColours.set(StateNames.active, greenBright)
+  stateColours.set(StateNames.terminated, blue)
+  const colour = (state:number) => {
+    const func = stateColours.get(state)
+    if (func)
+      return func(StateNames[state])
+    else return StateNames[state]
+  }
+
+  console.log(`CONTRACT STATE INFORMATION`)
+  console.log()
+
+  const web3 = new Web3('http://localhost:7545') as Web3Class
+  await recursiveWalk(contractAddress, web3,`Contract`)
+    .catch(err => console.error(red(err)))
+
+  async function recursiveWalk(address:string, web3:any, displayName:string):Promise<any> {
+    if (address === '0x0000000000000000000000000000000000000000') return Promise.reject('address was 0x')
+
+    const instance = new web3.eth.Contract(require('../ethereum/build/contracts/ICommonState.json').abi as ContractAbi, address)
+
+    const [contractState, numSubContracts] = await Promise.all([
+      <Promise<StateNames>>instance.methods.getState().call(),
+      <Promise<number>>instance.methods.countSubcontracts().call(),
+    ])
+
+    console.log(`${displayName} (at ${shorten(contractAddress)}) is ${colour(parseInt(contractState.toString(), 10))}, has ${numSubContracts} subcontracts`)
+
+    const p = new Array<Promise<any>>(parseInt(numSubContracts.toString(), 10))
+      .map(async (val, index) => {
+        const subContractAddress = await <Promise<string>>instance.methods.getSubcontract(index.toString()).call()
+        await recursiveWalk(subContractAddress, web3, `  - subcontract`)
+      })
+
+    await Promise.all(p) // return 1 promise
+  }
+
+  console.log('')
+  console.log('OPTIONS')
+  console.log(`  - transition contract to active using $ node cli.js 'sign'`)
+}
+
 async function add () {
   // const mainContractAddress:string = argv.a || argv.address
   const subcontractAddress:string = argv.s || argv.subcontract
@@ -175,6 +231,7 @@ interface Handler {
 }
 const handlers = new Map<Cmd, Handler>()
 
+handlers.set(Cmd.info, info)
 handlers.set(Cmd.add, add)
 handlers.set(Cmd.tx, tx)
 handlers.set(Cmd.help, Help)
