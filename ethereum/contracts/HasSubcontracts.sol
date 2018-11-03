@@ -38,16 +38,22 @@ contract HasSubcontracts is ICommonState, Owned {
         state = nextState;
     }
 
-    // implementation of ICommonState
-    function getState() public constant returns(uint) {
-        return state;
-    }
-
     function countState(uint _state) public constant returns(uint) {
         uint count = 0;
         if (subcontract.getState() == _state) {
             count++;
         }
         return count;
+    }
+
+    // implementation of ICommonState
+    function getState() external constant returns(uint) {
+        return state;
+    }
+    function countSubcontracts() external constant returns(uint) {
+        return 1;
+    }
+    function getSubcontract(uint _index) external constant returns(address) {
+        return subcontract;
     }
 }

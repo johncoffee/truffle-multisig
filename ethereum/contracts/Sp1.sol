@@ -3,7 +3,7 @@ pragma solidity ^0.4.0;
 import './owned.sol';
 import "./ICommonState.sol";
 
-contract Sp1 is Owned {
+contract Sp1 is ICommonState, Owned {
 
     // states: 1 = draft
     //         2 = active
@@ -42,5 +42,16 @@ contract Sp1 is Owned {
         require(subcontract.getState() == 3, "subcontract state was not 3");
 
         state = 3;
+    }
+
+    // implementation of ICommonState
+    function getState() external constant returns(uint) {
+        return state;
+    }
+    function countSubcontracts() external constant returns(uint) {
+        return 0;
+    }
+    function getSubcontract(uint _index) external constant returns(address) {
+        return subcontract;
     }
 }
