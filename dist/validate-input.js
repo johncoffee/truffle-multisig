@@ -3,8 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 function validate(subcommand, argv) {
     switch (subcommand) {
         case "create":
-            const createName = argv._[1] || argv.name;
-            console.assert(createName, `create requires a source file, eg. create "HelloWorld.sol" or -i "HelloWorld.sol"`);
+            console.assert(argv.s || argv.sp, "'create/deploy needs 'sp' -s or --sp");
+            console.assert(argv.f || argv.from, "'create/deploy need 'from' --from");
+            console.assert(argv.n || argv.name, `create/delpoy need 'name' --name"`);
             break;
         case 'register':
             // console.assert(argv.name, `register requires name, eg. --name ServiceProvider`)

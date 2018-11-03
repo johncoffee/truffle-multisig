@@ -7,17 +7,18 @@ const sigTools_js_1 = require("./sigTools.js");
 const eth_lightwallet_1 = require("eth-lightwallet");
 const lightwallet = require("eth-lightwallet");
 const files_js_1 = require("./files.js");
-const deploy_js_1 = require("./deploy.js");
 const visual_helpers_js_1 = require("./visual-helpers.js");
+const create_js_1 = require("./methods/create.js");
 const Web3 = require('web3');
 const txutils = lightwallet.txutils; // type washing
 console.assert(txutils, 'lightwallet.txutils should be a thing');
 const { yellow, red, blue, greenBright } = chalk_1.default;
 const argv = minimist(process.argv.slice(2), {
     string: [
-        'a', 's',
+        'a', 'address',
         'm', 'multisig',
         'd', 'dest',
+        'sp', 's',
         'from', 'f'
     ],
 });
@@ -123,45 +124,45 @@ async function info() {
     const networkId = argv.networkId || '1337';
     const contractAddress = argv.a || argv.address || require('../ethereum/build/contracts/Sp1.json').networks[networkId].address;
     // console.assert(contractAddress)
-    let StateNames;
-    (function (StateNames) {
-        StateNames[StateNames["draft"] = 1] = "draft";
-        StateNames[StateNames["active"] = 2] = "active";
-        StateNames[StateNames["terminated"] = 3] = "terminated";
-    })(StateNames || (StateNames = {}));
-    const stateColours = new Map();
-    stateColours.set(StateNames.draft, yellow);
-    stateColours.set(StateNames.active, greenBright);
-    stateColours.set(StateNames.terminated, blue);
-    const colour = (state) => {
-        const func = stateColours.get(state);
-        if (func)
-            return func(StateNames[state]);
-        else
-            return StateNames[state];
-    };
     console.log(`CONTRACT STATE INFORMATION`);
     console.log();
     const web3 = new Web3('http://localhost:7545');
     await recursiveWalk(contractAddress, web3, `Contract`)
         .catch(err => console.error(red(err)));
-    async function recursiveWalk(address, web3, displayName, level = 0) {
-        if (address === '0x0000000000000000000000000000000000000000')
-            return Promise.reject('address was 0x');
-        const instance = new web3.eth.Contract(require('../ethereum/build/contracts/ICommonState.json').abi, address);
-        const [contractState, numSubContracts] = await Promise.all([
-            instance.methods.getState().call(),
-            instance.methods.countSubcontracts().call(),
-        ]);
-        console.log(`${displayName} (at ${visual_helpers_js_1.shorten(contractAddress)}) is ${colour(parseInt(contractState.toString(), 10))}, has ${numSubContracts} subcontracts`);
-        for (let i = 0; i < numSubContracts; i++) {
-            const subContractAddress = await instance.methods.getSubcontract(i.toString()).call();
-            await recursiveWalk(subContractAddress, web3, `${' '.repeat(2 + level * 2)}- subcontract`, level + 1);
-        }
-    }
     console.log('');
     console.log('OPTIONS');
     console.log(`  - transition contract to active using $ node cli.js 'sign'`);
+}
+var StateNames;
+(function (StateNames) {
+    StateNames[StateNames["draft"] = 1] = "draft";
+    StateNames[StateNames["active"] = 2] = "active";
+    StateNames[StateNames["terminated"] = 3] = "terminated";
+})(StateNames || (StateNames = {}));
+const stateColours = new Map();
+stateColours.set(StateNames.draft, yellow);
+stateColours.set(StateNames.active, greenBright);
+stateColours.set(StateNames.terminated, blue);
+const colour = (state) => {
+    const func = stateColours.get(state);
+    if (func)
+        return func(StateNames[state]);
+    else
+        return StateNames[state];
+};
+async function recursiveWalk(address, web3, displayName, level = 0) {
+    if (address === '0x0000000000000000000000000000000000000000')
+        return Promise.reject('address was 0x');
+    const instance = new web3.eth.Contract(require('../ethereum/build/contracts/ICommonState.json').abi, address);
+    const [contractState, numSubContracts] = await Promise.all([
+        instance.methods.getState().call(),
+        instance.methods.countSubcontracts().call(),
+    ]);
+    console.log(`${displayName} (at ${visual_helpers_js_1.shorten(address)}) is ${colour(parseInt(contractState.toString(), 10))}, has ${numSubContracts} subcontracts`);
+    for (let i = 0; i < numSubContracts; i++) {
+        const subContractAddress = await instance.methods.getSubcontract(i.toString()).call();
+        await recursiveWalk(subContractAddress, web3, `${' '.repeat(2 + level * 2)}- subcontract`, level + 1);
+    }
 }
 async function add() {
     // const mainContractAddress:string = argv.a || argv.address
@@ -214,23 +215,9 @@ handlers.set(Cmd.list, async () => {
         .forEach(vm => Object.values(vm).forEach(val => console.log(val)));
 });
 handlers.set(Cmd.ls, handlers.get(Cmd.list));
-handlers.set(Cmd.deploy, async () => {
-    // const createName = argv._[1] || argv.name
-    const web3 = new Web3('http://localhost:7545');
-    const instance = await deploy_js_1.deploy(argv.from, web3);
-    console.log('Done. ', instance);
-});
 handlers.set(Cmd.create, async () => {
-    const createName = argv._[1] || argv.name;
-    // const s1 = keystore.generateRandomSeed()
-    // const s2 = keystore.generateRandomSeed()
-    console.log(`Creating contract '${argv.n}'`);
-    console.log(`from source '${createName}'`);
-    // console.debug(s1)
-    // console.debug(s2)
-    console.log("Deploying...");
-    console.log("Mined at block 30120312 tx hash 0xa8DBBB00d88e88s88f88ge9d");
-    console.log("Done.");
+    const web3 = new Web3('http://localhost:7545');
+    await create_js_1.create(argv.f || argv.from, argv.sp || argv.s, argv.n || argv.name, web3);
 });
 handlers.set(Cmd.mk, handlers.get(Cmd.create));
 const handler = handlers.get(subcommand) || handlers.get(Cmd.help);
