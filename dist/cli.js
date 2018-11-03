@@ -145,7 +145,7 @@ async function info() {
     const web3 = new Web3('http://localhost:7545');
     await recursiveWalk(contractAddress, web3, `Contract`)
         .catch(err => console.error(red(err)));
-    async function recursiveWalk(address, web3, displayName) {
+    async function recursiveWalk(address, web3, displayName, level = 0) {
         if (address === '0x0000000000000000000000000000000000000000')
             return Promise.reject('address was 0x');
         const instance = new web3.eth.Contract(require('../ethereum/build/contracts/ICommonState.json').abi, address);
@@ -154,12 +154,10 @@ async function info() {
             instance.methods.countSubcontracts().call(),
         ]);
         console.log(`${displayName} (at ${visual_helpers_js_1.shorten(contractAddress)}) is ${colour(parseInt(contractState.toString(), 10))}, has ${numSubContracts} subcontracts`);
-        const p = new Array(parseInt(numSubContracts.toString(), 10))
-            .map(async (val, index) => {
-            const subContractAddress = await instance.methods.getSubcontract(index.toString()).call();
-            await recursiveWalk(subContractAddress, web3, `  - subcontract`);
-        });
-        await Promise.all(p); // return 1 promise
+        for (let i = 0; i < numSubContracts; i++) {
+            const subContractAddress = await instance.methods.getSubcontract(i.toString()).call();
+            await recursiveWalk(subContractAddress, web3, `${' '.repeat(2 + level * 2)}- subcontract`, level + 1);
+        }
     }
     console.log('');
     console.log('OPTIONS');
