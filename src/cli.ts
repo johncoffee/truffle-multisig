@@ -4,9 +4,6 @@ import { validate } from './validate-input.js'
 import { createSig, retrieveKeystore, txObj } from './sigTools.js'
 import { keystore } from 'eth-lightwallet'
 import * as lightwallet from 'eth-lightwallet'
-import {BigNumber} from 'bignumber.js'
-import { Web3 as Web3Class } from 'web3x'
-import { Contract, ContractAbi } from 'web3x/contract'
 import { getDeployedContracts } from './files.js'
 import { shorten } from './visual-helpers.js'
 import { create } from './methods/create.js'
@@ -96,8 +93,8 @@ async function tx () {
   console.assert(destAddress, "did not find dest address")
   console.assert(multisigAddress, "did not find MultiSig address")
 
-  const web3 = new Web3('http://localhost:7545') as Web3Class
-  const multisigInstance:any = new web3.eth.Contract(require('../ethereum/build/contracts/SimpleMultiSig').abi as ContractAbi,
+  const web3 = new Web3('http://localhost:7545')
+  const multisigInstance:any = new web3.eth.Contract(require('../ethereum/build/contracts/SimpleMultiSig').abi,
     multisigAddress,
     {
       from: argv.from || argv.f,
@@ -109,7 +106,7 @@ async function tx () {
 
     console.log('nonce ' + nonce);
     // send transaction here, not using .call!
-    const res = await multisigInstance.methods.execute(sigs.sigV, sigs.sigR, sigs.sigS, destAddress, nonce, data).send()
+    await multisigInstance.methods.execute(sigs.sigV, sigs.sigR, sigs.sigS, destAddress, nonce, data).send()
   })
 }
 
@@ -118,8 +115,8 @@ async function sign () {
   const password = argv.p || argv.password || ''
   const multisigAddr = argv.m || argv.multisig || require('../ethereum/build/contracts/SimpleMultiSig.json').networks['1337'].address // dev stuff
 
-  const web3 = new Web3('http://localhost:7545') as Web3Class
-  const multisigInstance: Contract = new web3.eth.Contract(require('../ethereum/build/contracts/SimpleMultiSig').abi as ContractAbi,
+  const web3 = new Web3('http://localhost:7545')
+  const multisigInstance = new web3.eth.Contract(require('../ethereum/build/contracts/SimpleMultiSig').abi,
     multisigAddr,
     {
       from: argv.from || argv.f,
@@ -153,7 +150,7 @@ async function info () {
   console.log(`CONTRACT STATE INFORMATION`)
   console.log()
 
-  const web3 = new Web3('http://localhost:7545') as Web3Class
+  const web3 = new Web3('http://localhost:7545')
   await recursiveWalk(contractAddress, web3,`Contract`)
     .catch(err => console.error(red(err)))
 
@@ -180,7 +177,7 @@ const colour = (state:number) => {
 async function recursiveWalk(address:string, web3:any, displayName:string, level:number = 0):Promise<any> {
   if (address === '0x0000000000000000000000000000000000000000') return Promise.reject('address was 0x')
 
-  const instance = new web3.eth.Contract(require('../ethereum/build/contracts/ICommonState.json').abi as ContractAbi, address)
+  const instance = new web3.eth.Contract(require('../ethereum/build/contracts/ICommonState.json').abi, address)
 
   const [contractState, numSubContracts] = await Promise.all([
     <Promise<StateNames>>instance.methods.getState().call(),
@@ -204,8 +201,8 @@ async function add () {
   console.assert(subcontractAddress)
   console.assert(argv.from || argv.f)
 
-  const web3 = new Web3('http://localhost:7545') as Web3Class
-  const instance:any = new web3.eth.Contract(require('../ethereum/build/contracts/Sp1.json').abi as ContractAbi,
+  const web3 = new Web3('http://localhost:7545')
+  const instance:any = new web3.eth.Contract(require('../ethereum/build/contracts/Sp1.json').abi,
     require('../ethereum/build/contracts/Sp1.json').networks[networkId].address,
     {})
 
@@ -213,7 +210,7 @@ async function add () {
     .send({
       from: argv.from || argv.f,
     })
-    .then(val => {
+    .then(() => {
       instance.methods.subcontract().call().then(val => {
         console.assert(val.toString().toLowerCase() === subcontractAddress.toLowerCase(), "Was not set correct "+red(val))
       })
@@ -267,7 +264,7 @@ handlers.set(Cmd.ls, handlers.get(Cmd.list) as Handler)
 
 
 handlers.set(Cmd.create, async() => {
-  const web3 = new Web3('http://localhost:7545') as Web3Class
+  const web3 = new Web3('http://localhost:7545')
   await create(argv.f || argv.from, argv.sp || argv.s, argv.n || argv.name, web3)
 })
 handlers.set(Cmd.mk, handlers.get(Cmd.create) as Handler)
