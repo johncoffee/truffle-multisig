@@ -92,7 +92,7 @@ async function tx() {
         const data = txutils._encodeFunctionTxData('nextState', [], []); // sending data doesn't work https://github.com/ethereum/solidity/issues/2884
         console.log('nonce ' + nonce);
         // send transaction here, not using .call!
-        const res = await multisigInstance.methods.execute(sigs.sigV, sigs.sigR, sigs.sigS, destAddress, nonce, data).send();
+        await multisigInstance.methods.execute(sigs.sigV, sigs.sigR, sigs.sigS, destAddress, nonce, data).send();
     });
 }
 async function sign() {
@@ -178,7 +178,7 @@ async function add() {
         .send({
         from: argv.from || argv.f,
     })
-        .then(val => {
+        .then(() => {
         instance.methods.subcontract().call().then(val => {
             console.assert(val.toString().toLowerCase() === subcontractAddress.toLowerCase(), "Was not set correct " + red(val));
         });
