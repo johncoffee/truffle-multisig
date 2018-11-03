@@ -14,6 +14,7 @@ contract Sp1 is ICommonState, Owned {
     uint public constant totalPrice = 60000 wei;
     address public serviceProvider;
     ICommonState public subcontract;
+    uint public numSubcontracts;
 
     constructor(address _owner, address _serviceProvider)
         Owned(_owner) public {
@@ -24,6 +25,7 @@ contract Sp1 is ICommonState, Owned {
 
     function add(ICommonState _subcontract) public {
         require(msg.sender == serviceProvider);
+        numSubcontracts = 1;
         subcontract = ICommonState(_subcontract);
     }
 
@@ -49,7 +51,7 @@ contract Sp1 is ICommonState, Owned {
         return state;
     }
     function countSubcontracts() external constant returns(uint) {
-        return 0;
+        return numSubcontracts;
     }
     function getSubcontract(uint _index) external constant returns(address) {
         return subcontract;
