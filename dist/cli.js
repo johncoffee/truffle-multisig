@@ -8,6 +8,7 @@ const eth_lightwallet_1 = require("eth-lightwallet");
 const lightwallet = require("eth-lightwallet");
 const files_js_1 = require("./files.js");
 const deploy_js_1 = require("./deploy.js");
+const visual_helpers_js_1 = require("./visual-helpers.js");
 const Web3 = require('web3');
 const txutils = lightwallet.txutils; // type washing
 console.assert(txutils, 'lightwallet.txutils should be a thing');
@@ -26,18 +27,19 @@ if (argv.v) {
 var Cmd;
 (function (Cmd) {
     Cmd[Cmd["help"] = 0] = "help";
-    Cmd[Cmd["add"] = 1] = "add";
-    Cmd[Cmd["list"] = 2] = "list";
-    Cmd[Cmd["ls"] = 3] = "ls";
-    Cmd[Cmd["expenses"] = 4] = "expenses";
-    Cmd[Cmd["xp"] = 5] = "xp";
-    Cmd[Cmd["register"] = 6] = "register";
-    Cmd[Cmd["sp"] = 7] = "sp";
-    Cmd[Cmd["create"] = 8] = "create";
-    Cmd[Cmd["mk"] = 9] = "mk";
-    Cmd[Cmd["deploy"] = 10] = "deploy";
-    Cmd[Cmd["sign"] = 11] = "sign";
-    Cmd[Cmd["tx"] = 12] = "tx";
+    Cmd[Cmd["info"] = 1] = "info";
+    Cmd[Cmd["add"] = 2] = "add";
+    Cmd[Cmd["list"] = 3] = "list";
+    Cmd[Cmd["ls"] = 4] = "ls";
+    Cmd[Cmd["expenses"] = 5] = "expenses";
+    Cmd[Cmd["xp"] = 6] = "xp";
+    Cmd[Cmd["register"] = 7] = "register";
+    Cmd[Cmd["sp"] = 8] = "sp";
+    Cmd[Cmd["create"] = 9] = "create";
+    Cmd[Cmd["mk"] = 10] = "mk";
+    Cmd[Cmd["deploy"] = 11] = "deploy";
+    Cmd[Cmd["sign"] = 12] = "sign";
+    Cmd[Cmd["tx"] = 13] = "tx";
 })(Cmd || (Cmd = {}));
 const subcommand = Cmd[argv._[0]] || Cmd.help;
 // assertions
@@ -117,6 +119,52 @@ async function sign() {
         }
     });
 }
+async function info() {
+    const networkId = argv.networkId || '1337';
+    const contractAddress = argv.a || argv.address || require('../ethereum/build/contracts/Sp1.json').networks[networkId].address;
+    // console.assert(contractAddress)
+    let StateNames;
+    (function (StateNames) {
+        StateNames[StateNames["draft"] = 1] = "draft";
+        StateNames[StateNames["active"] = 2] = "active";
+        StateNames[StateNames["terminated"] = 3] = "terminated";
+    })(StateNames || (StateNames = {}));
+    const stateColours = new Map();
+    stateColours.set(StateNames.draft, yellow);
+    stateColours.set(StateNames.active, greenBright);
+    stateColours.set(StateNames.terminated, blue);
+    const colour = (state) => {
+        const func = stateColours.get(state);
+        if (func)
+            return func(StateNames[state]);
+        else
+            return StateNames[state];
+    };
+    console.log(`CONTRACT STATE INFORMATION`);
+    console.log();
+    const web3 = new Web3('http://localhost:7545');
+    await recursiveWalk(contractAddress, web3, `Contract`)
+        .catch(err => console.error(red(err)));
+    async function recursiveWalk(address, web3, displayName) {
+        if (address === '0x0000000000000000000000000000000000000000')
+            return Promise.reject('address was 0x');
+        const instance = new web3.eth.Contract(require('../ethereum/build/contracts/ICommonState.json').abi, address);
+        const [contractState, numSubContracts] = await Promise.all([
+            instance.methods.getState().call(),
+            instance.methods.countSubcontracts().call(),
+        ]);
+        console.log(`${displayName} (at ${visual_helpers_js_1.shorten(contractAddress)}) is ${colour(parseInt(contractState.toString(), 10))}, has ${numSubContracts} subcontracts`);
+        const p = new Array(parseInt(numSubContracts.toString(), 10))
+            .map(async (val, index) => {
+            const subContractAddress = await instance.methods.getSubcontract(index.toString()).call();
+            await recursiveWalk(subContractAddress, web3, `  - subcontract`);
+        });
+        await Promise.all(p); // return 1 promise
+    }
+    console.log('');
+    console.log('OPTIONS');
+    console.log(`  - transition contract to active using $ node cli.js 'sign'`);
+}
 async function add() {
     // const mainContractAddress:string = argv.a || argv.address
     const subcontractAddress = argv.s || argv.subcontract;
@@ -138,6 +186,7 @@ async function add() {
     });
 }
 const handlers = new Map();
+handlers.set(Cmd.info, info);
 handlers.set(Cmd.add, add);
 handlers.set(Cmd.tx, tx);
 handlers.set(Cmd.help, Help);
