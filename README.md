@@ -1,6 +1,6 @@
 
 
-#### This code base has NOT be reviewed by security experts and MUST therefore NOT be used, unless you are a) a security expert or b) l33t h4x0r.
+#### This code base has NOT be reviewed by security experts and MUST therefore NOT be used, unless you are _the_ security expert or l33t h4x0r.
 
 
 # Usage
