@@ -184,13 +184,10 @@ async function info () {
 
     console.log(`${displayName} (at ${shorten(contractAddress)}) is ${colour(parseInt(contractState.toString(), 10))}, has ${numSubContracts} subcontracts`)
 
-    const p = new Array<Promise<any>>(parseInt(numSubContracts.toString(), 10))
-      .map(async (val, index) => {
-        const subContractAddress = await <Promise<string>>instance.methods.getSubcontract(index.toString()).call()
-        await recursiveWalk(subContractAddress, web3, `  - subcontract`)
-      })
-
-    await Promise.all(p) // return 1 promise
+    for (let i = 0; i < numSubContracts; i++) {
+      const subContractAddress = await <Promise<string>>instance.methods.getSubcontract(i.toString()).call()
+      await recursiveWalk(subContractAddress, web3, `  - subcontract`)
+    }
   }
 
   console.log('')
