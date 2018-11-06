@@ -263,10 +263,8 @@ handlers.set(Cmd.list, async () => {
 handlers.set(Cmd.ls, handlers.get(Cmd.list) as Handler)
 
 
-handlers.set(Cmd.create, async() => {
-  const web3 = new Web3('http://localhost:7545')
-  await create(argv.f || argv.from, argv.sp || argv.s, argv.n || argv.name, web3)
-})
+handlers.set(Cmd.create, async () => create(argv.f || argv.from, argv.sp || argv.s, argv.n || argv.name))
+
 handlers.set(Cmd.mk, handlers.get(Cmd.create) as Handler)
 
 const handler = handlers.get(subcommand as any) || handlers.get(Cmd.help) as Handler

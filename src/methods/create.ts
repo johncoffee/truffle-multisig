@@ -1,6 +1,9 @@
 import { join } from 'path'
+const Web3 = require('web3')
 
-export async function create (from:string, serviceProvider:string, name:string, web3:any):Promise<void> {
+export async function create (from:string, serviceProvider:string, name:string):Promise<void> {
+  const web3 = new Web3('http://localhost:7545')
+
   const artifact = require(join(__dirname,`../../ethereum/build/contracts/${name}.json`))
 
   const metaInstance = new web3.eth.Contract(artifact.abi)
