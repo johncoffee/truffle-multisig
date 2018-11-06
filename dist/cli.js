@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const minimist = require("minimist");
 const chalk_1 = require("chalk");
-const validate_input_js_1 = require("./validate-input.js");
 const sigTools_js_1 = require("./sigTools.js");
 const eth_lightwallet_1 = require("eth-lightwallet");
 const lightwallet = require("eth-lightwallet");
@@ -43,10 +42,8 @@ var Cmd;
     Cmd[Cmd["tx"] = 13] = "tx";
 })(Cmd || (Cmd = {}));
 const subcommand = Cmd[argv._[0]] || Cmd.help;
-// assertions
-validate_input_js_1.validate(Cmd[subcommand], argv);
 async function Help() {
-    const cmdTpl = '$ node/cli.js';
+    const cmdTpl = 'node/cli.js';
     console.log('USAGE');
     console.log(`  ${cmdTpl} [-v] <command>`);
     console.log('');
@@ -131,7 +128,7 @@ async function info() {
         .catch(err => console.error(red(err)));
     console.log('');
     console.log('OPTIONS');
-    console.log(`  - transition contract to active using $ node cli.js 'sign'`);
+    console.log(`  - transition contract to active using node cli.js 'sign'`);
 }
 var StateNames;
 (function (StateNames) {
@@ -165,15 +162,25 @@ async function recursiveWalk(address, web3, displayName, level = 0) {
     }
 }
 async function add() {
+    if (argv._.length === 1) {
+        console.log("USAGE");
+        console.log("  add -s 0x123 -a 0x456");
+        console.log("");
+        console.log("OPTIONS");
+        console.log("  -a the address of the main contract");
+        console.log("  --subcontract, -s the address of the subcontract to be added");
+        return;
+    }
     // const mainContractAddress:string = argv.a || argv.address
     const subcontractAddress = argv.s || argv.subcontract;
     // console.assert(mainContractAddress)
     const networkId = argv.networkId || '1337';
     console.assert(networkId);
     console.assert(subcontractAddress);
+    console.assert(argv.a);
     console.assert(argv.from || argv.f);
     const web3 = new Web3('http://localhost:7545');
-    const instance = new web3.eth.Contract(require('../ethereum/build/contracts/Sp1.json').abi, require('../ethereum/build/contracts/Sp1.json').networks[networkId].address, {});
+    const instance = new web3.eth.Contract(require('../ethereum/build/contracts/Sp1.json').abi, argv.a, {});
     instance.methods.add(subcontractAddress)
         .send({
         from: argv.from || argv.f,
@@ -216,8 +223,20 @@ handlers.set(Cmd.list, async () => {
 });
 handlers.set(Cmd.ls, handlers.get(Cmd.list));
 handlers.set(Cmd.create, async () => {
-    const web3 = new Web3('http://localhost:7545');
-    await create_js_1.create(argv.f || argv.from, argv.sp || argv.s, argv.n || argv.name, web3);
+    if (argv.h || argv._.length === 1) {
+        console.log("USAGE");
+        console.log(`  node.cli create --from 0x123 --sp 0x345 --template Sp1`);
+        console.log(``);
+        console.log(`OPTIONS`);
+        console.log(`  --from, -f is the sender address`);
+        console.log(`  --template, -t the name of the compiled contract`);
+        console.log(`  --sp, -s is the service providers address`);
+        return;
+    }
+    console.assert(argv.s || argv.sp, "'create needs 'sp' -s or --sp");
+    console.assert(argv.f || argv.from, "'create needs 'from' --from");
+    console.assert(argv.t || argv.template, `create needs a 'template' --tpl Sp1`);
+    create_js_1.create(argv.f || argv.from, argv.sp || argv.s, argv.n || argv.name);
 });
 handlers.set(Cmd.mk, handlers.get(Cmd.create));
 const handler = handlers.get(subcommand) || handlers.get(Cmd.help);

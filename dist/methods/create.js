@@ -1,8 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const path_1 = require("path");
-async function create(from, serviceProvider, name, web3) {
-    const artifact = require(path_1.join(__dirname, `../../ethereum/build/contracts/${name}.json`));
+const Web3 = require('web3');
+async function create(from, serviceProvider, template) {
+    const web3 = new Web3('http://localhost:7545');
+    const artifact = require(path_1.join(__dirname, `../../ethereum/build/contracts/${template}.json`));
     const metaInstance = new web3.eth.Contract(artifact.abi);
     const deployed = await metaInstance
         .deploy({
