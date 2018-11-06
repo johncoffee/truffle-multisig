@@ -190,17 +190,28 @@ async function recursiveWalk(address:string, web3:any, displayName:string, level
 }
 
 async function add () {
+  if (argv._.length === 1) {
+    console.log("USAGE")
+    console.log("  add -s 0x123 -a 0x456")
+    console.log("")
+    console.log("OPTIONS")
+    console.log("  -a the address of the main contract")
+    console.log("  --subcontract, -s the address of the subcontract to be added")
+
+    return
+  }
   // const mainContractAddress:string = argv.a || argv.address
   const subcontractAddress:string = argv.s || argv.subcontract
   // console.assert(mainContractAddress)
   const networkId = argv.networkId || '1337'
   console.assert(networkId)
   console.assert(subcontractAddress)
+  console.assert(argv.a)
   console.assert(argv.from || argv.f)
 
   const web3 = new Web3('http://localhost:7545')
   const instance:any = new web3.eth.Contract(require('../ethereum/build/contracts/Sp1.json').abi,
-    require('../ethereum/build/contracts/Sp1.json').networks[networkId].address,
+    argv.a,
     {})
 
   instance.methods.add(subcontractAddress)
