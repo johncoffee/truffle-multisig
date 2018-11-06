@@ -1,6 +1,5 @@
 import minimist = require('minimist')
 import chalk from 'chalk'
-import { validate } from './validate-input.js'
 import { createSig, retrieveKeystore, txObj } from './sigTools.js'
 import { keystore } from 'eth-lightwallet'
 import * as lightwallet from 'eth-lightwallet'
@@ -42,12 +41,10 @@ enum Cmd {
 
 const subcommand:Cmd = Cmd[argv._[0]] as any || Cmd.help
 
-// assertions
-validate(Cmd[subcommand],argv)
 
 
 async function Help() {
-  const cmdTpl = '$ node/cli.js'
+  const cmdTpl = 'node/cli.js'
   console.log('USAGE')
   console.log(`  ${cmdTpl} [-v] <command>`)
   console.log('')
@@ -157,7 +154,7 @@ async function info () {
 
   console.log('')
   console.log('OPTIONS')
-  console.log(`  - transition contract to active using $ node cli.js 'sign'`)
+  console.log(`  - transition contract to active using node cli.js 'sign'`)
 }
 enum StateNames {
   draft = 1,
@@ -263,7 +260,24 @@ handlers.set(Cmd.list, async () => {
 handlers.set(Cmd.ls, handlers.get(Cmd.list) as Handler)
 
 
-handlers.set(Cmd.create, async () => create(argv.f || argv.from, argv.sp || argv.s, argv.n || argv.name))
+handlers.set(Cmd.create, async () => {
+  if (argv.h || argv._.length === 1) {
+    console.log("USAGE")
+    console.log(`  node.cli create --from 0x123 --sp 0x345 --template Sp1`)
+    console.log(``)
+    console.log(`OPTIONS`)
+    console.log(`  --from, -f is the sender address`)
+    console.log(`  --template, -t the name of the compiled contract`)
+    console.log(`  --sp, -s is the service providers address`)
+    return
+  }
+
+  console.assert(argv.s || argv.sp, "'create needs 'sp' -s or --sp")
+  console.assert(argv.f || argv.from, "'create needs 'from' --from")
+  console.assert(argv.t || argv.template, `create needs a 'template' --tpl Sp1`)
+
+  create(argv.f || argv.from, argv.sp || argv.s, argv.n || argv.name)
+})
 
 handlers.set(Cmd.mk, handlers.get(Cmd.create) as Handler)
 
