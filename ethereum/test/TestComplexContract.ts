@@ -33,7 +33,7 @@ contract('ComplexContract', ([deployer]) => {
 
     it("should have terms", async () => {
       const c = await instance.terms()
-      assert.strictEqual(c.toString() === '0x0000000000000000000000000000000000000000000000000000000000000000', false, "terms should be set to some bytes")
+      assert.isFalse(c.toString() === '0x0000000000000000000000000000000000000000000000000000000000000000', "terms should be set to some bytes")
     })
   })
 
