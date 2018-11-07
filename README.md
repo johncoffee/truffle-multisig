@@ -18,6 +18,16 @@ See a tutorial of doing a [two-party contract in the docs](./docs/two-party-cont
      (access to a local or remote Ethereum node is not required)
  3.  Download this codebase, and do a `npm install`
 
+
+#### Two sets of tools
+
+There are two packages in this repo: 
+The Truffle setup with unit tests, and the cli tool.
+ 
+ They have slightly different 
+TypeScript configurations - note the two `tsconfig.json` in `src/` and `ethereum/`.
+
+
 #### Windows support
 
 Yes. Please use [cmder](http://cmder.net/) as terminal emulator.
