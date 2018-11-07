@@ -31,7 +31,6 @@ enum Cmd {
   info,
   add,
   list, ls,
-  expenses, xp,
   register, sp,
   create, mk,
   deploy,
@@ -111,6 +110,10 @@ async function sign () {
   const seedPhrase = argv.s || argv.seed
   const password = argv.p || argv.password || ''
   const multisigAddr = argv.m || argv.multisig || require('../ethereum/build/contracts/SimpleMultiSig.json').networks['1337'].address // dev stuff
+
+  console.assert(seedPhrase, "need seedPhrase")
+  console.assert(multisigAddr, "need multisigAddr")
+  console.assert(!!password || password === '', "need password")
 
   const web3 = new Web3('http://localhost:7545')
   const multisigInstance = new web3.eth.Contract(require('../ethereum/build/contracts/SimpleMultiSig').abi,
@@ -241,17 +244,6 @@ handlers.set(Cmd.sign, sign)
 
 handlers.set(Cmd.register, register)
 handlers.set(Cmd.sp, register)
-
-handlers.set(Cmd.expenses, async () => {
-  console.log("Expense report")
-  console.log("")
-  console.log("  Contract 0x12...Qm has 4 recorded expenses")
-  console.log("    20   kaffe               0x33..mq")
-  console.log("    44   kaffe               0xf2..ef")
-  console.log("    750  DSB kontrol afgift  0xaf..01")
-  console.log("    22,5 kaffe               0x09..0a")
-})
-handlers.set(Cmd.xp, handlers.get(Cmd.expenses) as Handler)
 
 
 handlers.set(Cmd.list, async () => {
