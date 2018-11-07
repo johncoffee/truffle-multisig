@@ -1,21 +1,18 @@
 import minimist = require('minimist')
 import chalk from 'chalk'
-import { createSig, retrieveKeystore, txObj } from './sigTools.js'
+import { callNextStateMultiSig, createSig, retrieveKeystore, txObj } from './sigTools.js'
 import { keystore } from 'eth-lightwallet'
-import * as lightwallet from 'eth-lightwallet'
 import { getDeployedContracts } from './files.js'
-import { shorten } from './visual-helpers.js'
 import { create } from './methods/create.js'
 import { info } from './methods/info.js'
+import { ParsedArgs } from 'minimist'
 const Web3 = require('web3')
-
-const txutils = (lightwallet as any).txutils // type washing
-console.assert(txutils, 'lightwallet.txutils should be a thing');
 
 const {yellow, red, blue, greenBright} = chalk
 
 const argv = minimist(process.argv.slice(2), {
   string: [
+    '_',
     'a', 'address',
     'm', 'multisig',
     'd', 'dest',
@@ -23,9 +20,7 @@ const argv = minimist(process.argv.slice(2), {
     'from', 'f'
   ], // always treat these as strings
 })
-if (argv.v) {
-  console.debug(argv)
-}
+// console.debug(argv)
 
 enum Cmd {
   help,
@@ -44,11 +39,10 @@ const subcommand:Cmd = Cmd[argv._[0]] as any || Cmd.help
 
 
 async function Help() {
-  const cmdTpl = 'node/cli.js'
   console.log('USAGE')
-  console.log(`  ${cmdTpl} [-v] <command>`)
+  console.log(`  node cli.js <subcommand>`)
   console.log('')
-  console.log('COMMANDS')
+  console.log('SUBCOMMANDS')
   console.log('  '+ Object.keys(Cmd)
     .filter(v => v.toString().length > 2 || v === "tx")
     .filter(v => /^\d+$/.test(v) === false)
@@ -56,11 +50,16 @@ async function Help() {
     .join(', ')
   )
   console.log('')
-  console.log('FLAGS')
-  console.log('  use -v to show debug output')
+  console.log("Try 'node cli.js <subcommand> -h' to learn more about each command")
 }
 
 async function register () {
+  if (argv.h) {
+    console.log("USAGE")
+    console.log("  register")
+    return
+  }
+
   const newSeed = keystore.generateRandomSeed()
   const [ks, keyFromPw] = await retrieveKeystore(newSeed, '')
 
@@ -68,46 +67,54 @@ async function register () {
   const [signingAddr] = ks.getAddresses()
   console.log("Address: "+signingAddr)
   console.log("Seed:    "+newSeed)
-
 }
+
 async function tx () {
-  const sig1 = JSON.parse(argv._[1]) // {"sigV":28,"sigR":"0x7d223c507acf17887340f364f7cf910ec54dfb2f10e08ce5ddc3d60bf9b221b3","sigS":"0x1bdd9f4ba9afd5466b59010746caf55dd396769a1c8a8c001e3ee693276af1d3"}
-  const sig2 = JSON.parse(argv._[2]) // {"sigV":28,"sigR":"0x7d223c507acf17887340f364f7cf910ec54dfb2f10e08ce5ddc3d60bf9b221b3","sigS":"0x1bdd9f4ba9afd5466b59010746caf55dd396769a1c8a8c001e3ee693276af1d3"}
-
-  const sigsOrdered:txObj[] = [sig1, sig2] // .sort() // should have been sorted based on sender address
-  // validate all input
-  sigsOrdered.forEach(sig1 => console.assert(sig1.sigV && sig1.sigR && sig1.sigS, "missing V, R or S", sig1))
-
-  const sigs = {
-    sigV: sigsOrdered.map(sig => sig.sigV),
-    sigR: sigsOrdered.map(sig => sig.sigR),
-    sigS: sigsOrdered.map(sig => sig.sigS),
+  if (subcommandNoArgs(argv)) {
+    console.log("USAGE")
+    console.log("  tx <sig1> <sig2>")
+    console.log("")
+    console.log("ARGUMENTS")
+    console.log("  two serialized signatures")
+    console.log("")
+    console.log("OPTIONS")
+    console.log("  --from, -f from address")
+    console.log("  --multisig, -m multisigAddress address")
+    console.log("  --dest, -d destAddress address")
+    return
   }
 
   const destAddress     = argv.d || argv.dest     || require('../ethereum/build/contracts/SimpleContract.json').networks['1337'].address // demo stuff
   const multisigAddress = argv.m || argv.multisig || require('../ethereum/build/contracts/SimpleMultiSig.json').networks['1337'].address // dev stuff
+  const from = argv.from || argv.f
 
   console.assert(destAddress, "did not find dest address")
   console.assert(multisigAddress, "did not find MultiSig address")
+  console.assert(from, "did not get from")
 
-  const web3 = new Web3('http://localhost:7545')
-  const multisigInstance:any = new web3.eth.Contract(require('../ethereum/build/contracts/SimpleMultiSig').abi,
-    multisigAddress,
-    {
-      from: argv.from || argv.f,
-    })
+  const sig1 = JSON.parse(argv._[1]) // {"sigV":28,"sigR":"0x7d223c507acf17887340f364f7cf910ec54dfb2f10e08ce5ddc3d60bf9b221b3","sigS":"0x1bdd9f4ba9afd5466b59010746caf55dd396769a1c8a8c001e3ee693276af1d3"}
+  const sig2 = JSON.parse(argv._[2]) // {"sigV":28,"sigR":"0x7d223c507acf17887340f364f7cf910ec54dfb2f10e08ce5ddc3d60bf9b221b3","sigS":"0x1bdd9f4ba9afd5466b59010746caf55dd396769a1c8a8c001e3ee693276af1d3"}
 
-  // Web3 use call because we just reading
-  multisigInstance.methods.nonce().call().then(async nonce => {
-    const data = txutils._encodeFunctionTxData('nextState', [], []);// sending data doesn't work https://github.com/ethereum/solidity/issues/2884
+  // validate all input
+  new Array(sig1, sig2)
+    .forEach((sig, index) => console.assert(sig.sigV && sig.sigR && sig.sigS, index +": missing V, R or S", sig))
 
-    console.log('nonce ' + nonce);
-    // send transaction here, not using .call!
-    await multisigInstance.methods.execute(sigs.sigV, sigs.sigR, sigs.sigS, destAddress, nonce, data).send()
-  })
+  callNextStateMultiSig(sig1, sig2, destAddress, multisigAddress, from)
 }
 
 async function sign () {
+  if (subcommandNoArgs(argv)) {
+    console.log("USAGE")
+    console.log("  sign -s 0x123 -m 0x234 -d 0x345 -f 0x456")
+    console.log("")
+    console.log("OPTIONS")
+    console.log("  --dest, -d address of the business contract")
+    console.log("  --multisig, -m address of the multisig contract")
+    console.log("  --seed, -s seed words to signing HD wallet")
+    console.log("  --from, -f transaction from address")
+    return
+  }
+
   const seedPhrase = argv.s || argv.seed
   const password = argv.p || argv.password || ''
   const multisigAddr = argv.m || argv.multisig || require('../ethereum/build/contracts/SimpleMultiSig.json').networks['1337'].address // dev stuff
@@ -125,13 +132,14 @@ async function sign () {
 
   multisigInstance.methods.nonce().call().then(async nonce => {
     const destAddr = argv.d || argv.dest || require('../ethereum/build/contracts/SimpleContract.json').networks['1337'].address // demo stuff
+    console.assert(destAddr, 'missing dest address')
 
     const [ks, keyFromPw] = await retrieveKeystore(seedPhrase, password)
     ks.generateNewAddress(keyFromPw, 1)
     const [signingAddr] = ks.getAddresses()
     let s:txObj
     try {
-      s = createSig(ks, signingAddr, keyFromPw, multisigAddr, nonce, 'nextState', destAddr)
+      s = createSig(ks, signingAddr, keyFromPw, multisigAddr, nonce, 'nextState', destAddr) // TODO dont hardcode method
       console.log('Signature:')
       console.log(JSON.stringify(s))
     }
@@ -144,7 +152,7 @@ async function sign () {
 }
 
 async function add () {
-  if (argv._.length === 1) {
+  if (subcommandNoArgs(argv)) {
     console.log("USAGE")
     console.log("  add -s 0x123 -a 0x456")
     console.log("")
@@ -180,6 +188,10 @@ async function add () {
 }
 
 
+function subcommandNoArgs(argv:ParsedArgs):boolean {
+  return (argv.h || argv._.length === 1)
+}
+
 // router
 
 interface Handler {
@@ -201,6 +213,12 @@ handlers.set(Cmd.register, register)
 handlers.set(Cmd.sp, handlers.get(Cmd.register) as Handler)
 
 handlers.set(Cmd.list, async () => {
+  if (argv.h) {
+    console.log("USAGE")
+    console.log("  node cli.js list")
+    return
+  }
+
   const networkId = argv.networkId || '1337'
   const allContracts = await getDeployedContracts(networkId)
 
@@ -219,20 +237,30 @@ handlers.set(Cmd.ls, handlers.get(Cmd.list) as Handler)
 handlers.set(Cmd.create, async () => {
   if (argv.h) {
     console.log("USAGE")
-    console.log(`  node.cli create --from 0x123 --sp 0x345 --template Sp1`)
+    console.log(`  node.cli create --from 0x123 --template Sp1 <arguments>`)
     console.log(``)
     console.log(`OPTIONS`)
     console.log(`  --from, -f is the sender address`)
     console.log(`  --template, -t the name of the compiled contract`)
-    console.log(`  --sp, -s is the service providers address`)
     return
   }
 
-  console.assert(argv.s || argv.sp, "'create needs 'sp' -s or --sp")
-  console.assert(argv.f || argv.from, "'create needs 'from' --from")
+  const from = argv.f || argv.from
+  console.assert(from, "'create needs 'from' --from")
+
   console.assert(argv.t || argv.template, `create needs a 'template' --template Sp1`)
 
-  create(argv.f || argv.from, argv.sp || argv.s, argv.t || argv.template)
+  if (argv.t === 'Sp1' || argv.template === 'Sp1') {
+    console.assert(argv.s || argv.sp, "'create needs 'sp' -s or --sp")
+  }
+
+  const constructorArgs = argv._.filter(val => val !== Cmd[Cmd.create])
+
+  console.debug(argv)
+  console.info("passing ", constructorArgs.map(val => `'${val}'`).join(', '))
+
+
+  await create(constructorArgs, argv.t || argv.template, from)
 })
 
 handlers.set(Cmd.mk, handlers.get(Cmd.create) as Handler)
