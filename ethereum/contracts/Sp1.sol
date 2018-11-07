@@ -10,11 +10,20 @@ contract Sp1 is ICommonState, Owned {
     //         3 = terminated
     uint public state = 1; // defaults to draft
 
+    // 32 bytes hash of an external document
     bytes32 public constant terms = 0x123;
+
+    // the price
     uint public constant totalPrice = 60000 wei;
+
+    // the address where the price payments goes to
     address public serviceProvider;
+
+    // address of the sub contract
     ICommonState public subcontract;
+    // count number of sub contracts (here we only have 1, see also the `add` method)
     uint public numSubcontracts;
+
 
     constructor(address _owner, address _serviceProvider)
         Owned(_owner) public {
