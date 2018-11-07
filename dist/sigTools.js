@@ -5,6 +5,7 @@ const solsha3 = require('solidity-sha3').default;
 const leftPad = require('left-pad');
 const bignumber_js_1 = require("bignumber.js");
 const lightwallet = require("eth-lightwallet");
+const Web3 = require('web3');
 const txutils = lightwallet.txutils; // type washing
 console.assert(txutils, 'lightwallet.txutils should be a thing');
 function retrieveKeystore(seedPhrase, password = '') {
@@ -43,3 +44,25 @@ function createSig(ks, signingAddr, keyFromPw, multisigContractAddr, nonce, dest
     return { sigV: sigV, sigR: sigR, sigS: sigS };
 }
 exports.createSig = createSig;
+function callNextStateMultiSig(sig1, sig2, destAddress, multisigAddress, from) {
+    const sigsOrdered = [sig1, sig2]; // .sort() // should have been sorted based on sender address
+    // validate all input
+    sigsOrdered.forEach(sig1 => console.assert(sig1.sigV && sig1.sigR && sig1.sigS, "missing V, R or S", sig1));
+    const sigs = {
+        sigV: sigsOrdered.map(sig => sig.sigV),
+        sigR: sigsOrdered.map(sig => sig.sigR),
+        sigS: sigsOrdered.map(sig => sig.sigS),
+    };
+    const web3 = new Web3('http://localhost:7545');
+    const multisigInstance = new web3.eth.Contract(require('../ethereum/build/contracts/SimpleMultiSig').abi, multisigAddress, {
+        from: from,
+    });
+    // Web3 use call because we just reading
+    multisigInstance.methods.nonce().call().then(async (nonce) => {
+        const data = txutils._encodeFunctionTxData('nextState', [], []); // sending data doesn't work https://github.com/ethereum/solidity/issues/2884
+        console.log('nonce ' + nonce);
+        // send transaction here, not using .call!
+        await multisigInstance.methods.execute(sigs.sigV, sigs.sigR, sigs.sigS, destAddress, nonce, data).send();
+    });
+}
+exports.callNextStateMultiSig = callNextStateMultiSig;
