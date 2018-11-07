@@ -31,15 +31,13 @@ var Cmd;
     Cmd[Cmd["add"] = 2] = "add";
     Cmd[Cmd["list"] = 3] = "list";
     Cmd[Cmd["ls"] = 4] = "ls";
-    Cmd[Cmd["expenses"] = 5] = "expenses";
-    Cmd[Cmd["xp"] = 6] = "xp";
-    Cmd[Cmd["register"] = 7] = "register";
-    Cmd[Cmd["sp"] = 8] = "sp";
-    Cmd[Cmd["create"] = 9] = "create";
-    Cmd[Cmd["mk"] = 10] = "mk";
-    Cmd[Cmd["deploy"] = 11] = "deploy";
-    Cmd[Cmd["sign"] = 12] = "sign";
-    Cmd[Cmd["tx"] = 13] = "tx";
+    Cmd[Cmd["register"] = 5] = "register";
+    Cmd[Cmd["sp"] = 6] = "sp";
+    Cmd[Cmd["create"] = 7] = "create";
+    Cmd[Cmd["mk"] = 8] = "mk";
+    Cmd[Cmd["deploy"] = 9] = "deploy";
+    Cmd[Cmd["sign"] = 10] = "sign";
+    Cmd[Cmd["tx"] = 11] = "tx";
 })(Cmd || (Cmd = {}));
 const subcommand = Cmd[argv._[0]] || Cmd.help;
 async function Help() {
@@ -96,6 +94,9 @@ async function sign() {
     const seedPhrase = argv.s || argv.seed;
     const password = argv.p || argv.password || '';
     const multisigAddr = argv.m || argv.multisig || require('../ethereum/build/contracts/SimpleMultiSig.json').networks['1337'].address; // dev stuff
+    console.assert(seedPhrase, "need seedPhrase");
+    console.assert(multisigAddr, "need multisigAddr");
+    console.assert(!!password || password === '', "need password");
     const web3 = new Web3('http://localhost:7545');
     const multisigInstance = new web3.eth.Contract(require('../ethereum/build/contracts/SimpleMultiSig').abi, multisigAddr, {
         from: argv.from || argv.f,
@@ -198,17 +199,7 @@ handlers.set(Cmd.tx, tx);
 handlers.set(Cmd.help, Help);
 handlers.set(Cmd.sign, sign);
 handlers.set(Cmd.register, register);
-handlers.set(Cmd.sp, register);
-handlers.set(Cmd.expenses, async () => {
-    console.log("Expense report");
-    console.log("");
-    console.log("  Contract 0x12...Qm has 4 recorded expenses");
-    console.log("    20   kaffe               0x33..mq");
-    console.log("    44   kaffe               0xf2..ef");
-    console.log("    750  DSB kontrol afgift  0xaf..01");
-    console.log("    22,5 kaffe               0x09..0a");
-});
-handlers.set(Cmd.xp, handlers.get(Cmd.expenses));
+handlers.set(Cmd.sp, handlers.get(Cmd.register));
 handlers.set(Cmd.list, async () => {
     const networkId = argv.networkId || '1337';
     const allContracts = await files_js_1.getDeployedContracts(networkId);
@@ -223,7 +214,7 @@ handlers.set(Cmd.list, async () => {
 });
 handlers.set(Cmd.ls, handlers.get(Cmd.list));
 handlers.set(Cmd.create, async () => {
-    if (argv.h || argv._.length === 1) {
+    if (argv.h) {
         console.log("USAGE");
         console.log(`  node.cli create --from 0x123 --sp 0x345 --template Sp1`);
         console.log(``);
@@ -235,8 +226,8 @@ handlers.set(Cmd.create, async () => {
     }
     console.assert(argv.s || argv.sp, "'create needs 'sp' -s or --sp");
     console.assert(argv.f || argv.from, "'create needs 'from' --from");
-    console.assert(argv.t || argv.template, `create needs a 'template' --tpl Sp1`);
-    create_js_1.create(argv.f || argv.from, argv.sp || argv.s, argv.n || argv.name);
+    console.assert(argv.t || argv.template, `create needs a 'template' --template Sp1`);
+    create_js_1.create(argv.f || argv.from, argv.sp || argv.s, argv.t || argv.template);
 });
 handlers.set(Cmd.mk, handlers.get(Cmd.create));
 const handler = handlers.get(subcommand) || handlers.get(Cmd.help);
