@@ -243,8 +243,7 @@ handlers.set(Cmd.help, Help)
 handlers.set(Cmd.sign, sign)
 
 handlers.set(Cmd.register, register)
-handlers.set(Cmd.sp, register)
-
+handlers.set(Cmd.sp, handlers.get(Cmd.register) as Handler)
 
 handlers.set(Cmd.list, async () => {
   const networkId = argv.networkId || '1337'
@@ -259,12 +258,11 @@ handlers.set(Cmd.list, async () => {
     }) )
     .forEach(vm => Object.values(vm).forEach(val => console.log(val) ))
 })
-
 handlers.set(Cmd.ls, handlers.get(Cmd.list) as Handler)
 
 
 handlers.set(Cmd.create, async () => {
-  if (argv.h || argv._.length === 1) {
+  if (argv.h) {
     console.log("USAGE")
     console.log(`  node.cli create --from 0x123 --sp 0x345 --template Sp1`)
     console.log(``)
@@ -277,9 +275,9 @@ handlers.set(Cmd.create, async () => {
 
   console.assert(argv.s || argv.sp, "'create needs 'sp' -s or --sp")
   console.assert(argv.f || argv.from, "'create needs 'from' --from")
-  console.assert(argv.t || argv.template, `create needs a 'template' --tpl Sp1`)
+  console.assert(argv.t || argv.template, `create needs a 'template' --template Sp1`)
 
-  create(argv.f || argv.from, argv.sp || argv.s, argv.n || argv.name)
+  create(argv.f || argv.from, argv.sp || argv.s, argv.t || argv.template)
 })
 
 handlers.set(Cmd.mk, handlers.get(Cmd.create) as Handler)
