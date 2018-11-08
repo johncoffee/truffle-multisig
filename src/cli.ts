@@ -200,9 +200,16 @@ interface Handler {
 const handlers = new Map<Cmd, Handler>()
 
 handlers.set(Cmd.info, async() => {
+  if (subcommandNoArgs(argv)) {
+    console.log('USAGE')
+    console.log('  node cli.js info <address>')
+    return
+  }
+
   const networkId = argv.networkId || '1337'
-  const contractAddress:string = argv.a || argv.address || require('../ethereum/build/contracts/Sp1.json').networks[networkId].address
-  info(contractAddress, networkId)
+  const contractAddress:string = argv._[1]
+  console.assert(contractAddress, "please provide an address")
+  await info(contractAddress, networkId)
 })
 handlers.set(Cmd.add, add)
 handlers.set(Cmd.tx, tx)
