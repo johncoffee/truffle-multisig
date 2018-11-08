@@ -2,7 +2,7 @@ import minimist = require('minimist')
 import chalk from 'chalk'
 import { callNextStateMultiSig, createSig, retrieveKeystore, txObj } from './sigTools.js'
 import { keystore } from 'eth-lightwallet'
-import { addDeployedContract, getDeployedContracts } from './files.js'
+import { addDeployedContract, getDeployedContracts, getDeployedContracts2, savedContract } from './files.js'
 import { create } from './methods/create.js'
 import { info } from './methods/info.js'
 import { ParsedArgs } from 'minimist'
@@ -220,14 +220,14 @@ handlers.set(Cmd.list, async () => {
   }
 
   const networkId = argv.networkId || '1337'
-  const allContracts = await getDeployedContracts(networkId)
+  const allContracts:savedContract[] = await getDeployedContracts2()
 
-  console.log(`CONTRACTS OVERVIEW (network ${networkId})`)
+  console.log(`CONTRACTS OVERVIEW`)
   console.log("")
   allContracts
     .map(contract => ({
       name: `  ${contract.contractName}`,
-      address: `    ${contract.networks ? contract.networks[networkId].address : '(not deployed)'}`,
+      address: `    ${contract.address}`,
     }) )
     .forEach(vm => Object.values(vm).forEach(val => console.log(val) ))
 })

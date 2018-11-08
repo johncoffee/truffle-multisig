@@ -44,11 +44,7 @@ export type savedContract = {
 }
 
 export async function addDeployedContract (name:string, address: string) {
-  await ensureDir(dataDirPath)
-  let table:jsonList = await readJSON(filePath)
-  if (table instanceof Array === false) {
-    table = []
-  }
+  const table = await getDeployedContracts2()
   table.push(<savedContract>{
     address: address,
     contractName: name,
@@ -57,4 +53,16 @@ export async function addDeployedContract (name:string, address: string) {
   await writeJSON(filePath,table,{
     spaces: 2 // JSON formatting
   })
+}
+
+
+export async function getDeployedContracts2 ():Promise<savedContract[]> {
+  try {
+    await ensureDir(dataDirPath)
+    let table:savedContract[] = await readJSON(filePath)
+    return table
+  }
+  catch (e) {
+  }
+  return []
 }
