@@ -31,9 +31,8 @@ var Cmd;
     Cmd[Cmd["sp"] = 6] = "sp";
     Cmd[Cmd["create"] = 7] = "create";
     Cmd[Cmd["mk"] = 8] = "mk";
-    Cmd[Cmd["deploy"] = 9] = "deploy";
-    Cmd[Cmd["sign"] = 10] = "sign";
-    Cmd[Cmd["tx"] = 11] = "tx";
+    Cmd[Cmd["sign"] = 9] = "sign";
+    Cmd[Cmd["send"] = 10] = "send";
 })(Cmd || (Cmd = {}));
 const subcommand = Cmd[argv._[0]] || Cmd.help;
 async function Help() {
@@ -42,8 +41,12 @@ async function Help() {
     console.log('');
     console.log('SUBCOMMANDS');
     console.log('  ' + Object.keys(Cmd)
-        .filter(v => v.toString().length > 2 || v === "tx")
         .filter(v => /^\d+$/.test(v) === false)
+        .filter(v => v.length > 2) // remove short names
+        .filter(value => [
+        Cmd[Cmd.help],
+        Cmd[Cmd.create],
+    ].includes(value) == false) // blacklisted
         .sort()
         .join(', '));
     console.log('');
@@ -65,7 +68,7 @@ async function register() {
 async function tx() {
     if (subcommandNoArgs(argv)) {
         console.log("USAGE");
-        console.log("  tx <sig1> <sig2>");
+        console.log(`  ${Cmd[Cmd.send]} <sig1> <sig2>`);
         console.log("");
         console.log("ARGUMENTS");
         console.log("  two serialized signatures");
@@ -164,12 +167,18 @@ function subcommandNoArgs(argv) {
 }
 const handlers = new Map();
 handlers.set(Cmd.info, async () => {
+    if (subcommandNoArgs(argv)) {
+        console.log('USAGE');
+        console.log('  node cli.js info <address>');
+        return;
+    }
     const networkId = argv.networkId || '1337';
-    const contractAddress = argv.a || argv.address || require('../ethereum/build/contracts/Sp1.json').networks[networkId].address;
-    info_js_1.info(contractAddress, networkId);
+    const contractAddress = argv._[1];
+    console.assert(contractAddress, "please provide an address");
+    await info_js_1.info(contractAddress, networkId);
 });
 handlers.set(Cmd.add, add);
-handlers.set(Cmd.tx, tx);
+handlers.set(Cmd.send, tx);
 handlers.set(Cmd.help, Help);
 handlers.set(Cmd.sign, sign);
 handlers.set(Cmd.register, register);
@@ -181,37 +190,38 @@ handlers.set(Cmd.list, async () => {
         return;
     }
     const networkId = argv.networkId || '1337';
-    const allContracts = await files_js_1.getDeployedContracts(networkId);
-    console.log(`CONTRACTS OVERVIEW (network ${networkId})`);
+    const allContracts = await files_js_1.getDeployedContracts2();
+    console.log(`CONTRACTS OVERVIEW`);
     console.log("");
     allContracts
         .map(contract => ({
         name: `  ${contract.contractName}`,
-        address: `    ${contract.networks[networkId].address}`,
+        address: `    ${contract.address}`,
     }))
         .forEach(vm => Object.values(vm).forEach(val => console.log(val)));
 });
 handlers.set(Cmd.ls, handlers.get(Cmd.list));
 handlers.set(Cmd.create, async () => {
-    if (argv.h) {
+    if (subcommandNoArgs(argv)) {
         console.log("USAGE");
-        console.log(`  node.cli create --from 0x123 --template Sp1 <arguments>`);
+        console.log(`  node.cli create --from 0x123 <contract name> <constructor arguments>`);
         console.log(``);
         console.log(`OPTIONS`);
         console.log(`  --from, -f is the sender address`);
-        console.log(`  --template, -t the name of the compiled contract`);
         return;
     }
     const from = argv.f || argv.from;
-    console.assert(from, "'create needs 'from' --from");
-    console.assert(argv.t || argv.template, `create needs a 'template' --template Sp1`);
-    if (argv.t === 'Sp1' || argv.template === 'Sp1') {
-        console.assert(argv.s || argv.sp, "'create needs 'sp' -s or --sp");
+    console.assert(from, "'create needs --from, -f");
+    const tpl = argv._[1];
+    console.assert(tpl, "Need a template name");
+    const constructorArgs = argv._.slice(2);
+    console.debug(tpl, constructorArgs);
+    console.info("Creating: ", tpl);
+    console.info("Passing: ", constructorArgs.map(val => `'${val}'`).join(', '));
+    const contract = await create_js_1.create(constructorArgs, tpl, from);
+    if (!argv.n) {
+        await files_js_1.addDeployedContract(tpl, contract.options.address);
     }
-    const constructorArgs = argv._.filter(val => val !== Cmd[Cmd.create]);
-    console.debug(argv);
-    console.info("passing ", constructorArgs.map(val => `'${val}'`).join(', '));
-    await create_js_1.create(constructorArgs, argv.t || argv.template, from);
 });
 handlers.set(Cmd.mk, handlers.get(Cmd.create));
 const handler = handlers.get(subcommand) || handlers.get(Cmd.help);

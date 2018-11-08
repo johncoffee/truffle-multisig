@@ -11,9 +11,6 @@ async function info(contractAddress, networkId) {
     const web3 = new Web3('http://localhost:7545');
     await recursiveWalk(contractAddress, web3, `Contract`)
         .catch(err => console.error(red(err)));
-    console.log('');
-    console.log('OPTIONS');
-    console.log(`  - transition contract to active using node cli.js 'sign'`);
 }
 exports.info = info;
 var StateNames;
