@@ -2,16 +2,14 @@ pragma solidity ^0.4.0;
 
 import './owned.sol';
 import "./ICommonState.sol";
+import "./CommonStates.sol";
 
-contract Sp1 is ICommonState, Owned {
+contract Sp1 is ICommonState, CommonStates, Owned {
 
-    // states: 1 = draft
-    //         2 = active
-    //         3 = terminated
-    uint public state = 1; // defaults to draft
+    uint public state = ACTIVE; // defaults to draft
 
     // 32 bytes hash of an external document
-    bytes32 public constant terms = 0x123;
+    bytes32 public documentChecksum;
 
     // the price
     uint public constant totalPrice = 60000 wei;
@@ -24,6 +22,10 @@ contract Sp1 is ICommonState, Owned {
     // count number of sub contracts (here we only have 1, see also the `add` method)
     uint public numSubcontracts;
 
+    modifier serviceProviderOnly {
+        require(msg.sender == serviceProvider);
+        _;
+    }
 
     constructor(address _owner, address _serviceProvider)
         Owned(_owner) public {
@@ -32,8 +34,7 @@ contract Sp1 is ICommonState, Owned {
 
     // sub contracts
 
-    function add(ICommonState _subcontract) public {
-        require(msg.sender == serviceProvider);
+    function add(ICommonState _subcontract) serviceProviderOnly external {
         numSubcontracts = 1;
         subcontract = ICommonState(_subcontract);
     }
@@ -41,18 +42,22 @@ contract Sp1 is ICommonState, Owned {
     // state
 
     function activate() external ownerOnly {
-        require(state == 1, "current state was not 1");
-        state = 2;
+        require(state == ACTIVE, "current state was not 1");
+        state = ACTIVE;
     }
 
     function terminate() external ownerOnly {
-        require(state == 2, "current state was not 2");
+        require(state == ACTIVE, "current state was not 2");
 
         require(serviceProvider.balance >= totalPrice, "payment address did not hold enough ether to enter state 3");
 
-        require(subcontract.getState() == 3, "subcontract state was not 3");
+        require(subcontract.getState() == TERMINATED, "subcontract state was not 3");
 
-        state = 3;
+        state = TERMINATED;
+    }
+
+    function setDocumentChecksum(bytes32 _checksum) serviceProviderOnly {
+        documentChecksum = _checksum;
     }
 
     // implementation of ICommonState
