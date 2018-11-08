@@ -237,30 +237,28 @@ handlers.set(Cmd.ls, handlers.get(Cmd.list) as Handler)
 handlers.set(Cmd.create, async () => {
   if (subcommandNoArgs(argv)) {
     console.log("USAGE")
-    console.log(`  node.cli create --from 0x123 --template Sp1 <arguments>`)
+    console.log(`  node.cli create --from 0x123 <contract name> <constructor arguments>`)
     console.log(``)
     console.log(`OPTIONS`)
     console.log(`  --from, -f is the sender address`)
-    console.log(`  --template, -t the name of the compiled contract`)
     return
   }
 
   const from = argv.f || argv.from
-  console.assert(from, "'create needs 'from' --from")
+  console.assert(from, "'create needs --from, -f")
 
-  console.assert(argv.t || argv.template, `create needs a 'template' --template Sp1`)
+  const tpl = argv._[1]
+  console.assert(tpl, "Need a template name")
+  const constructorArgs = argv._.slice(2)
 
-  if (argv.t === 'Sp1' || argv.template === 'Sp1') {
-    console.assert(argv.s || argv.sp, "'create needs 'sp' -s or --sp")
-  }
+  console.debug(tpl, constructorArgs)
 
-  const constructorArgs = argv._.filter(val => val !== Cmd[Cmd.create])
+  console.info("Creating: ", tpl)
+  console.info("Passing: ", constructorArgs.map(val => `'${val}'`).join(', '))
 
-  console.info("passing ", constructorArgs.map(val => `'${val}'`).join(', '))
-
-  const contract = await create(constructorArgs, argv.t || argv.template, from)
+  const contract = await create(constructorArgs, tpl, from)
   if (!argv.n) {
-    await addDeployedContract(contract.options.address)
+    await addDeployedContract(tpl, contract.options.address)
   }
 })
 

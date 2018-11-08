@@ -37,11 +37,24 @@ export async function getDeployedContracts(networkId:string):Promise<json[]> {
   })
 }
 
-export async function addDeployedContract (address: string) {
+export type savedContract = {
+  address: string
+  contractName: string
+  created: string
+}
+
+export async function addDeployedContract (name:string, address: string) {
   await ensureDir(dataDirPath)
-  const list:string[] = await readJSON(filePath)
-  list.push(address)
-  await writeJSON(filePath,list,{
+  let table:jsonList = await readJSON(filePath)
+  if (table instanceof Array === false) {
+    table = []
+  }
+  table.push(<savedContract>{
+    address: address,
+    contractName: name,
+    created: new Date().toJSON(),
+  })
+  await writeJSON(filePath,table,{
     spaces: 2 // JSON formatting
   })
 }
