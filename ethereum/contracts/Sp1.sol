@@ -42,12 +42,12 @@ contract Sp1 is ICommonState, CommonStates, Owned {
     // state
 
     function activate() external ownerOnly {
-        require(state == ACTIVE, "current state was not 1");
+        require(state == DRAFT, "current state was not DRAFT");
         state = ACTIVE;
     }
 
     function terminate() external ownerOnly {
-        require(state == ACTIVE, "current state was not 2");
+        require(state == ACTIVE, "current state was not ACTIVE");
 
         require(serviceProvider.balance >= totalPrice, "payment address did not hold enough ether to enter state 3");
 
