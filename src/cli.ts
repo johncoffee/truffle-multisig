@@ -29,9 +29,8 @@ enum Cmd {
   list, ls,
   register, sp,
   create, mk,
-  deploy,
   sign,
-  tx,
+  send,
 }
 
 const subcommand:Cmd = Cmd[argv._[0]] as any || Cmd.help
@@ -44,8 +43,12 @@ async function Help() {
   console.log('')
   console.log('SUBCOMMANDS')
   console.log('  '+ Object.keys(Cmd)
-    .filter(v => v.toString().length > 2 || v === "tx")
     .filter(v => /^\d+$/.test(v) === false)
+    .filter(v => v.length > 2) // remove short names
+    .filter(value => [
+      Cmd[Cmd.help],
+      Cmd[Cmd.create],
+    ].includes(value) == false) // blacklisted
     .sort()
     .join(', ')
   )
@@ -72,7 +75,7 @@ async function register () {
 async function tx () {
   if (subcommandNoArgs(argv)) {
     console.log("USAGE")
-    console.log("  tx <sig1> <sig2>")
+    console.log(`  ${Cmd[Cmd.send]} <sig1> <sig2>`)
     console.log("")
     console.log("ARGUMENTS")
     console.log("  two serialized signatures")
@@ -212,7 +215,7 @@ handlers.set(Cmd.info, async() => {
   await info(contractAddress, networkId)
 })
 handlers.set(Cmd.add, add)
-handlers.set(Cmd.tx, tx)
+handlers.set(Cmd.send, tx)
 handlers.set(Cmd.help, Help)
 handlers.set(Cmd.sign, sign)
 
