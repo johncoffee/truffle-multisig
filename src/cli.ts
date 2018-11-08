@@ -2,7 +2,7 @@ import minimist = require('minimist')
 import chalk from 'chalk'
 import { callNextStateMultiSig, createSig, retrieveKeystore, txObj } from './sigTools.js'
 import { keystore } from 'eth-lightwallet'
-import { getDeployedContracts } from './files.js'
+import { addDeployedContract, getDeployedContracts } from './files.js'
 import { create } from './methods/create.js'
 import { info } from './methods/info.js'
 import { ParsedArgs } from 'minimist'
@@ -227,7 +227,7 @@ handlers.set(Cmd.list, async () => {
   allContracts
     .map(contract => ({
       name: `  ${contract.contractName}`,
-      address: `    ${contract.networks[networkId].address}`,
+      address: `    ${contract.networks ? contract.networks[networkId].address : '(not deployed)'}`,
     }) )
     .forEach(vm => Object.values(vm).forEach(val => console.log(val) ))
 })
@@ -235,7 +235,7 @@ handlers.set(Cmd.ls, handlers.get(Cmd.list) as Handler)
 
 
 handlers.set(Cmd.create, async () => {
-  if (argv.h) {
+  if (subcommandNoArgs(argv)) {
     console.log("USAGE")
     console.log(`  node.cli create --from 0x123 --template Sp1 <arguments>`)
     console.log(``)
@@ -256,11 +256,12 @@ handlers.set(Cmd.create, async () => {
 
   const constructorArgs = argv._.filter(val => val !== Cmd[Cmd.create])
 
-  console.debug(argv)
   console.info("passing ", constructorArgs.map(val => `'${val}'`).join(', '))
 
-
-  await create(constructorArgs, argv.t || argv.template, from)
+  const contract = await create(constructorArgs, argv.t || argv.template, from)
+  if (!argv.n) {
+    await addDeployedContract(contract.options.address)
+  }
 })
 
 handlers.set(Cmd.mk, handlers.get(Cmd.create) as Handler)

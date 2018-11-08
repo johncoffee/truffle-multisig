@@ -1,7 +1,7 @@
 import { join } from 'path'
 const Web3 = require('web3')
 
-export async function create (constructorArguments:string[], template:string, from:string):Promise<void> {
+export async function create (constructorArguments:string[], template:string, from:string) {
   const web3 = new Web3('http://localhost:7545')
 
   const artifact = require(join(__dirname,`../../ethereum/build/contracts/${template}.json`))

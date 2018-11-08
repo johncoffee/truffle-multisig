@@ -11,3 +11,5 @@ ethereum/build/
 
 /src/**/*.js
 /ethereum/test/**/*.js
+
+data/
