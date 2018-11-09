@@ -235,10 +235,11 @@ handlers.set(Cmd.list, async () => {
   console.log(`CONTRACTS OVERVIEW`)
   console.log("")
   allContracts
-    .map(contract => ({
-      name: `  ${contract.contractName}`,
-      address: `    ${contract.address}`,
-    }) )
+    .map(contract => ([
+      `  ${contract.contractName}`,
+      `    ${contract.address}`,
+      `    ${contract.created.substr(0, 10)} ${contract.created_note}`,
+    ]) )
     .forEach(vm => Object.values(vm).forEach(val => console.log(val) ))
 })
 handlers.set(Cmd.ls, handlers.get(Cmd.list) as Handler)

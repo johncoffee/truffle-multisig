@@ -41,6 +41,7 @@ export type savedContract = {
   address: string
   contractName: string
   created: string
+  created_note: string
 }
 
 export async function addDeployedContract (name:string, address: string, msg?:string) {
