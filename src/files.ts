@@ -43,12 +43,13 @@ export type savedContract = {
   created: string
 }
 
-export async function addDeployedContract (name:string, address: string) {
+export async function addDeployedContract (name:string, address: string, msg?:string) {
   const table = await getDeployedContracts2()
   table.push(<savedContract>{
     address: address,
     contractName: name,
     created: new Date().toJSON(),
+    created_note: msg,
   })
   await writeJSON(filePath,table,{
     spaces: 2 // JSON formatting

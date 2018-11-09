@@ -254,6 +254,7 @@ handlers.set(Cmd.create, async () => {
     return
   }
 
+  const msg = argv.m || argv.message
   const from = argv.f || argv.from
   console.assert(from, "'create needs --from, -f")
 
@@ -268,7 +269,7 @@ handlers.set(Cmd.create, async () => {
 
   const contract = await create(constructorArgs, tpl, from)
   if (!argv.n) {
-    await addDeployedContract(tpl, contract.options.address)
+    await addDeployedContract(tpl, contract.options.address, msg)
   }
 })
 
