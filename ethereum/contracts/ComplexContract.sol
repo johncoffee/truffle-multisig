@@ -1,6 +1,6 @@
 pragma solidity ^0.4.0;
 
-import './owned.sol';
+import './Owned.sol';
 
 contract ComplexContract is Owned {
 
@@ -16,8 +16,7 @@ contract ComplexContract is Owned {
 
     address public paymentsTo;
 
-    constructor(address _owner, address _paymentsTo) public {
-        owner = _owner;
+    constructor(address _owner, address _paymentsTo) Owned(_owner) public {
         paymentsTo = _paymentsTo;
     }
 

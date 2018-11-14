@@ -1,6 +1,6 @@
 pragma solidity ^0.4.0;
 
-import './owned.sol';
+import './Owned.sol';
 import './ICommonState.sol';
 
 contract HasSubcontracts is ICommonState, Owned {
@@ -18,8 +18,8 @@ contract HasSubcontracts is ICommonState, Owned {
 
     ICommonState subcontract;
 
-    constructor(address _owner, address _paymentsTo, address _serviceProvider) public {
-        owner = _owner;
+    constructor(address _owner, address _paymentsTo, address _serviceProvider)
+    Owned(_owner) public {
         paymentsTo = _paymentsTo;
         serviceProvider = _serviceProvider;
         initiator = msg.sender; // note we've assumed this is msg.sender!

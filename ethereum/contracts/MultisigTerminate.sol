@@ -1,6 +1,6 @@
 pragma solidity ^0.4.0;
 
-import './owned.sol';
+import './Owned.sol';
 import "./ICommonState.sol";
 import "./CommonStates.sol";
 
