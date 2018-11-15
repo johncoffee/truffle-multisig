@@ -2,7 +2,7 @@ pragma solidity ^0.4.0;
 
 import './Owned.sol';
 
-contract SimpleContract is Owned {
+contract StatefulOwned is Owned {
     uint state = 1;
 
     constructor(address _owner) Owned(_owner) public {
