@@ -4,7 +4,7 @@ import './Owned.sol';
 import "./ICommonState.sol";
 import "./CommonStates.sol";
 
-contract MultisigTerminate is ICommonState, CommonStates, Owned {
+contract ExternalDocPriced is ICommonState, CommonStates, Owned {
     uint public state = ACTIVE;
 
     address public paymentAddress;
@@ -15,8 +15,13 @@ contract MultisigTerminate is ICommonState, CommonStates, Owned {
         paymentAddress = _paymentAddress;
     }
 
+    function setDoc(bytes32 _hash) external ownerOnly {
+        externalDocument = _hash;
+    }
+
     function terminate() external ownerOnly {
-        require(paymentAddress.balance >= totalPrice);
+        require(externalDocument != 0x0, "There was not set a document hash");
+        require(paymentAddress.balance >= totalPrice, "There was less than totalPrice on the payment address");
         state = TERMINATED;
     }
 
