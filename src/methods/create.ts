@@ -1,7 +1,12 @@
 import { join } from 'path'
 const Web3 = require('web3')
 
-export async function create (constructorArguments:any[], template:string, from:string) {
+export async function create (template:string, from:string, constructorArguments:any[] = []) {
+  constructorArguments.forEach(val => {
+    console.assert(val !== undefined, "can't pass undefined to constructor")
+    console.assert(val !== null, "can't pass null to constructor")
+  })
+
   const web3 = new Web3('http://localhost:7545')
 
   const artifact = require(join(__dirname,`../../ethereum/build/contracts/${template}.json`))
