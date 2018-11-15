@@ -287,6 +287,12 @@ handlers.set(Cmd.create, async () => {
 
   console.debug(tpl, constructorArgs)
 
+  if (argv.json) {
+    constructorArgs.forEach(((value, index, array) => {
+      array[index] = JSON.parse(value)
+    }))
+  }
+
   console.info("Creating: ", tpl)
   console.info("Passing: ", constructorArgs.map(val => `'${val}'`).join(', '))
 
