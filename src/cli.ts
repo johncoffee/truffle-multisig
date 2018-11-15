@@ -17,6 +17,7 @@ const argv = minimist(process.argv.slice(2), {
     'm', 'multisig',
     'd', 'dest',
     'sp', 's',
+    'o', 'owners',
     'from', 'f'
   ], // always treat these as strings
 })
@@ -121,7 +122,7 @@ async function sign () {
 
   const seedPhrase = argv.s || argv.seed
   const password = argv.p || argv.password || ''
-  const multisigAddr = argv.m || argv.multisig || require('../ethereum/build/contracts/SimpleMultiSig.json').networks['1337'].address // dev stuff
+  const multisigAddr = argv.m || argv.multisig
 
   console.assert(seedPhrase, "need seedPhrase")
   console.assert(multisigAddr, "need multisigAddr")
@@ -277,9 +278,10 @@ handlers.set(Cmd.create, async () => {
     return
   }
 
-  const msg = argv.m || argv.message
+  const msg = argv.m || argv.message || argv.msg
   const from = argv.f || argv.from
-  console.assert(from, "'create needs --from, -f")
+  console.assert(msg, "Please leave a note for the contract deployment using --msg")
+  console.assert(from, "'create' needs --from, -f")
 
   const tpl = argv._[1]
   console.assert(tpl, "Need a template name")
@@ -291,13 +293,25 @@ handlers.set(Cmd.create, async () => {
     }))
   }
 
-  console.log(`Constructor arguments (${constructorArgs.length || "none"}):`)
+  const multiSigOwners:undefined|string[] = argv.owners
+  let multiSigContractDeployed
+  if (Array.isArray(multiSigOwners) && multiSigOwners.length > 1) {
+    console.log("Deploying multisig contract for "+multiSigOwners.length + " owners ...")
+    multiSigContractDeployed = await create('SimpleMultiSig', from, [multiSigOwners.length, multiSigOwners])
+    constructorArgs.unshift(multiSigContractDeployed.options.address)
+    console.log('')
+  }
+
+  console.log(`Constructor arguments in applied order (${constructorArgs.length || "none"})`)
   constructorArgs
     .forEach(value => console.log('  ',JSON.stringify(value)))
 
   const contract = await create(tpl, from, constructorArgs)
-  if (!argv.n) {
-    await addDeployedContract(tpl, contract.options.address, msg)
+  await addDeployedContract(tpl, contract.options.address, msg)
+
+  if (multiSigContractDeployed) {
+    const msg = `Multisig contract owning ${contract.options.address}`
+    await addDeployedContract('SimpleMultiSig', multiSigContractDeployed.options.address, msg)
   }
 })
 
@@ -306,3 +320,4 @@ handlers.set(Cmd.mk, handlers.get(Cmd.create) as Handler)
 const handler = handlers.get(subcommand as any) || handlers.get(Cmd.help) as Handler
 console.assert(handler, "should have found handler")
 handler()
+  .catch(err => console.error(red(err.toString())))
