@@ -4,7 +4,7 @@ import { callNextStateMultiSig, createSig, retrieveKeystore, txObj } from './sig
 import { keystore } from 'eth-lightwallet'
 import { addDeployedContract, getDeployedContracts, getDeployedContracts2, savedContract } from './files.js'
 import { create } from './methods/create.js'
-import { info } from './methods/info.js'
+import { info, recursiveWalk } from './methods/info.js'
 import { ParsedArgs } from 'minimist'
 const Web3 = require('web3')
 
@@ -25,6 +25,7 @@ const argv = minimist(process.argv.slice(2), {
 enum Cmd {
   help,
   info,
+  status, er,
   add,
   list, ls,
   register, sp,
@@ -214,6 +215,27 @@ handlers.set(Cmd.info, async() => {
   console.assert(contractAddress, "please provide an address")
   await info(contractAddress, networkId)
 })
+
+handlers.set(Cmd.status, async() => {
+  if (argv.h) {
+    console.log('USAGE')
+    console.log('  node cli.js er der styr på det?')
+    return
+  }
+
+  const networkId = argv.networkId || '1337'
+  // await info(contractAddress, networkId)
+
+  const allContracts:savedContract[] = await getDeployedContracts2()
+  const web3 = new Web3('http://localhost:7545')
+
+  allContracts
+    .forEach(contract => {
+      recursiveWalk(contract.address, web3, `Contract`)
+    })
+})
+handlers.set(Cmd.er, handlers.get(Cmd.status) as Handler)
+
 handlers.set(Cmd.add, add)
 handlers.set(Cmd.send, tx)
 handlers.set(Cmd.help, Help)

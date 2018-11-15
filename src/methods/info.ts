@@ -32,7 +32,7 @@ const colour = (state:number) => {
   else return StateNames[state]
 }
 
-async function recursiveWalk(address:string, web3:any, displayName:string, level:number = 0):Promise<any> {
+export async function recursiveWalk(address:string, web3:any, displayName:string, level:number = 0):Promise<any> {
   if (address === '0x0000000000000000000000000000000000000000') return Promise.reject('address was 0x')
 
   const instance = new web3.eth.Contract(require( join(__dirname, '../../ethereum/build/contracts/ICommonState.json')).abi, address)
