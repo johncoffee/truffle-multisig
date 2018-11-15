@@ -6,6 +6,7 @@ export async function create (constructorArguments:string[], template:string, fr
 
   const artifact = require(join(__dirname,`../../ethereum/build/contracts/${template}.json`))
 
+  console.assert(artifact.bytecode && artifact.bytecode !== "0x", `Something is off with the byte code: `+ artifact.bytecode)
   const metaInstance = new web3.eth.Contract(artifact.abi)
 
   const deployed = await metaInstance
