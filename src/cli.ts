@@ -88,8 +88,8 @@ async function tx () {
     return
   }
 
-  const destAddress     = argv.d || argv.dest     || require('../ethereum/build/contracts/SimpleContract.json').networks['1337'].address // demo stuff
-  const multisigAddress = argv.m || argv.multisig || require('../ethereum/build/contracts/SimpleMultiSig.json').networks['1337'].address // dev stuff
+  const destAddress     = argv.d || argv.dest
+  const multisigAddress = argv.m || argv.multisig
   const from = argv.from || argv.f
 
   console.assert(destAddress, "did not find dest address")
@@ -135,7 +135,7 @@ async function sign () {
     })
 
   multisigInstance.methods.nonce().call().then(async nonce => {
-    const destAddr = argv.d || argv.dest || require('../ethereum/build/contracts/SimpleContract.json').networks['1337'].address // demo stuff
+    const destAddr = argv.d || argv.dest
     console.assert(destAddr, 'missing dest address')
 
     const [ks, keyFromPw] = await retrieveKeystore(seedPhrase, password)
