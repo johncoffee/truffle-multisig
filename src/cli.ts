@@ -283,9 +283,7 @@ handlers.set(Cmd.create, async () => {
 
   const tpl = argv._[1]
   console.assert(tpl, "Need a template name")
-  const constructorArgs = argv._.slice(2)
-
-  console.debug(tpl, constructorArgs)
+  const constructorArgs:any[] = argv._.slice(2) || []
 
   if (argv.json) {
     constructorArgs.forEach(((value, index, array) => {
@@ -293,10 +291,11 @@ handlers.set(Cmd.create, async () => {
     }))
   }
 
-  console.info("Creating: ", tpl)
-  console.info("Passing: ", constructorArgs.map(val => `'${val}'`).join(', '))
+  console.log(`Constructor arguments (${constructorArgs.length || "none"}):`)
+  constructorArgs
+    .forEach(value => console.log('  ',JSON.stringify(value)))
 
-  const contract = await create(constructorArgs, tpl, from)
+  const contract = await create(tpl, from, constructorArgs)
   if (!argv.n) {
     await addDeployedContract(tpl, contract.options.address, msg)
   }
