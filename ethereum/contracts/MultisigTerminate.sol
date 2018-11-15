@@ -5,11 +5,11 @@ import "./ICommonState.sol";
 import "./CommonStates.sol";
 
 contract MultisigTerminate is ICommonState, CommonStates, Owned {
-    uint state = ACTIVE;
+    uint public state = ACTIVE;
 
     address public paymentAddress;
-    bytes32 public hash;
-    uint public totalPrice;
+    bytes32 public externalDocument = 0x0;
+    uint public totalPrice = 10 ether;
 
     constructor(address _owner, address _paymentAddress) Owned(_owner) public {
         paymentAddress = _paymentAddress;
@@ -20,6 +20,7 @@ contract MultisigTerminate is ICommonState, CommonStates, Owned {
         state = TERMINATED;
     }
 
+    // implementation of ICommonState
     function getState() external constant returns(uint) {
         return state;
     }
@@ -27,6 +28,6 @@ contract MultisigTerminate is ICommonState, CommonStates, Owned {
         return 0;
     }
     function getSubcontract(uint _index) external constant returns(address) {
-        return 0;
+        return address(_index);
     }
 }
