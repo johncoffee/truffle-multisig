@@ -6,7 +6,7 @@ import "./CommonStates.sol";
 
 contract Sp1 is ICommonState, CommonStates, Owned {
 
-    uint public state = ACTIVE; // defaults to draft
+    uint public state = DRAFT; // defaults to draft
 
     // 32 bytes hash of an external document
     bytes32 public documentChecksum;
