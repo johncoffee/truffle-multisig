@@ -4,7 +4,7 @@ import './Owned.sol';
 import "./ICommonState.sol";
 import "./CommonStates.sol";
 
-contract K1 is ICommonState, CommonStates, Owned {
+contract K1 is ICommonState, IHasSubcontracts, CommonStates, Owned {
 
     uint public state = DRAFT; // defaults to draft
 
@@ -32,7 +32,7 @@ contract K1 is ICommonState, CommonStates, Owned {
         serviceProvider = _serviceProvider;
     }
 
-    // sub contracts
+    // IHasSubcontracts
 
     function add(ICommonState _subcontract) serviceProviderOnly external {
         numSubcontracts = 1;

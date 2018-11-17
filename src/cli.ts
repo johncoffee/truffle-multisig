@@ -177,7 +177,7 @@ async function add () {
   console.assert(argv.from || argv.f)
 
   const web3 = new Web3('http://localhost:7545')
-  const instance:any = new web3.eth.Contract(require('../ethereum/build/contracts/Sp1.json').abi,
+  const instance:any = new web3.eth.Contract(require('../ethereum/build/contracts/IHasSubcontracts.json').abi,
     argv.a,
     {})
 
