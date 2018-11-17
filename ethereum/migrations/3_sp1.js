@@ -1,4 +1,4 @@
-const Sp1 = artifacts.require("Sp1")
+const Sp1 = artifacts.require("K1")
 
 module.exports = function(deployer, network, accounts) {
 
