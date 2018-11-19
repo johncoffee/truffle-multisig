@@ -1,5 +1,7 @@
 import { join } from 'path'
+import chalk from 'chalk'
 const Web3 = require('web3')
+const {greenBright} = chalk
 
 export async function create (template:string, from:string, constructorArguments:any[] = []) {
   constructorArguments.forEach(val => {
@@ -24,8 +26,7 @@ export async function create (template:string, from:string, constructorArguments
       gas: 2000000,
     })
 
-  // console.debug(Object.keys(deployed.methods))
-  console.log(`Deployed to ${deployed.options.address}`)
+  console.info(`Deployed to ${greenBright(deployed.options.address)}`)
   return deployed
 }
 
