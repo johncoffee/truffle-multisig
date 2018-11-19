@@ -271,10 +271,11 @@ handlers.set(Cmd.ls, handlers.get(Cmd.list) as Handler)
 handlers.set(Cmd.create, async () => {
   if (subcommandNoArgs(argv)) {
     console.log("USAGE")
-    console.log(`  node.cli create --from 0x123 <contract name> <constructor arguments>`)
+    console.log(`  node.cli create --from 0x123 --message "a test contract" <contract name> <constructor arguments>`)
     console.log(``)
     console.log(`OPTIONS`)
     console.log(`  --from, -f is the sender address`)
+    console.log(`  --message, -m is the administrative note about the contract`)
     return
   }
 
