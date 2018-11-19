@@ -15,7 +15,9 @@ const argv = minimist(process.argv.slice(2), {
         'a', 'address',
         'm', 'multisig',
         'd', 'dest',
+        'u',
         'sp', 's',
+        'o', 'owners',
         'from', 'f'
     ],
 });
@@ -24,18 +26,20 @@ var Cmd;
 (function (Cmd) {
     Cmd[Cmd["help"] = 0] = "help";
     Cmd[Cmd["info"] = 1] = "info";
-    Cmd[Cmd["add"] = 2] = "add";
-    Cmd[Cmd["list"] = 3] = "list";
-    Cmd[Cmd["ls"] = 4] = "ls";
-    Cmd[Cmd["register"] = 5] = "register";
-    Cmd[Cmd["sp"] = 6] = "sp";
-    Cmd[Cmd["create"] = 7] = "create";
-    Cmd[Cmd["mk"] = 8] = "mk";
-    Cmd[Cmd["sign"] = 9] = "sign";
-    Cmd[Cmd["send"] = 10] = "send";
+    Cmd[Cmd["status"] = 2] = "status";
+    Cmd[Cmd["er"] = 3] = "er";
+    Cmd[Cmd["add"] = 4] = "add";
+    Cmd[Cmd["list"] = 5] = "list";
+    Cmd[Cmd["ls"] = 6] = "ls";
+    Cmd[Cmd["register"] = 7] = "register";
+    Cmd[Cmd["sp"] = 8] = "sp";
+    Cmd[Cmd["create"] = 9] = "create";
+    Cmd[Cmd["mk"] = 10] = "mk";
+    Cmd[Cmd["sign"] = 11] = "sign";
+    Cmd[Cmd["send"] = 12] = "send";
 })(Cmd || (Cmd = {}));
-const subcommand = Cmd[argv._[0]] || Cmd.help;
-async function Help() {
+const subcommand = Cmd[argv._[0]];
+async function _help() {
     console.log('USAGE');
     console.log(`  node cli.js <subcommand>`);
     console.log('');
@@ -52,7 +56,7 @@ async function Help() {
     console.log('');
     console.log("Try 'node cli.js <subcommand> -h' to learn more about each command");
 }
-async function register() {
+async function _register() {
     if (argv.h) {
         console.log("USAGE");
         console.log("  register");
@@ -65,48 +69,53 @@ async function register() {
     console.log("Address: " + signingAddr);
     console.log("Seed:    " + newSeed);
 }
-async function tx() {
+async function _tx() {
     if (subcommandNoArgs(argv)) {
         console.log("USAGE");
-        console.log(`  ${Cmd[Cmd.send]} <sig1> <sig2>`);
+        console.log(`  ${Cmd[Cmd.send]} <sig1> <sig2> --from 0x123 --dest 0x345 --multisig 0x678`);
         console.log("");
         console.log("ARGUMENTS");
         console.log("  two serialized signatures");
         console.log("");
         console.log("OPTIONS");
+        console.log("  --method, -m destination method");
+        console.log("  --dest, -d destination address");
         console.log("  --from, -f from address");
-        console.log("  --multisig, -m multisigAddress address");
-        console.log("  --dest, -d destAddress address");
+        console.log("  --multisig, -u multisigAddress address");
         return;
     }
-    const destAddress = argv.d || argv.dest || require('../ethereum/build/contracts/SimpleContract.json').networks['1337'].address; // demo stuff
-    const multisigAddress = argv.m || argv.multisig || require('../ethereum/build/contracts/SimpleMultiSig.json').networks['1337'].address; // dev stuff
+    const destMethod = argv.m || argv.method;
+    const destAddress = argv.d || argv.dest;
+    const multisigAddress = argv.u || argv.multisig;
     const from = argv.from || argv.f;
-    console.assert(destAddress, "did not find dest address");
-    console.assert(multisigAddress, "did not find MultiSig address");
-    console.assert(from, "did not get from");
+    console.assert(destMethod, "missing dest. method; use --method -m");
+    console.assert(destAddress, "missing dest. address; use --dest -d");
+    console.assert(multisigAddress, "missing multiSig address; use --multisig -u");
+    console.assert(from, "missing from; --from -f");
     const sig1 = JSON.parse(argv._[1]); // {"sigV":28,"sigR":"0x7d223c507acf17887340f364f7cf910ec54dfb2f10e08ce5ddc3d60bf9b221b3","sigS":"0x1bdd9f4ba9afd5466b59010746caf55dd396769a1c8a8c001e3ee693276af1d3"}
     const sig2 = JSON.parse(argv._[2]); // {"sigV":28,"sigR":"0x7d223c507acf17887340f364f7cf910ec54dfb2f10e08ce5ddc3d60bf9b221b3","sigS":"0x1bdd9f4ba9afd5466b59010746caf55dd396769a1c8a8c001e3ee693276af1d3"}
     // validate all input
     new Array(sig1, sig2)
         .forEach((sig, index) => console.assert(sig.sigV && sig.sigR && sig.sigS, index + ": missing V, R or S", sig));
-    sigTools_js_1.callNextStateMultiSig(sig1, sig2, destAddress, multisigAddress, from);
+    sigTools_js_1.multiSigCall(destMethod, sig1, sig2, destAddress, multisigAddress, from);
 }
-async function sign() {
-    if (subcommandNoArgs(argv)) {
+async function _sign() {
+    if (argv.h) {
         console.log("USAGE");
-        console.log("  sign -s 0x123 -m 0x234 -d 0x345 -f 0x456");
+        console.log(`  sign --method testHest --multisig 0x234 --dest 0x345 --from 0x456 --seed "mnemonic .. words"`);
         console.log("");
         console.log("OPTIONS");
-        console.log("  --dest, -d address of the business contract");
-        console.log("  --multisig, -m address of the multisig contract");
+        console.log("  --method, -m destination method");
+        console.log("  --dest, -d destination contract");
+        console.log("  --multisig, -u address of the multisig contract");
         console.log("  --seed, -s seed words to signing HD wallet");
         console.log("  --from, -f transaction from address");
         return;
     }
     const seedPhrase = argv.s || argv.seed;
     const password = argv.p || argv.password || '';
-    const multisigAddr = argv.m || argv.multisig || require('../ethereum/build/contracts/SimpleMultiSig.json').networks['1337'].address; // dev stuff
+    const multisigAddr = argv.u || argv.multisig;
+    const destMethod = argv.m || argv.method;
     console.assert(seedPhrase, "need seedPhrase");
     console.assert(multisigAddr, "need multisigAddr");
     console.assert(!!password || password === '', "need password");
@@ -115,14 +124,14 @@ async function sign() {
         from: argv.from || argv.f,
     });
     multisigInstance.methods.nonce().call().then(async (nonce) => {
-        const destAddr = argv.d || argv.dest || require('../ethereum/build/contracts/SimpleContract.json').networks['1337'].address; // demo stuff
+        const destAddr = argv.d || argv.dest;
         console.assert(destAddr, 'missing dest address');
         const [ks, keyFromPw] = await sigTools_js_1.retrieveKeystore(seedPhrase, password);
         ks.generateNewAddress(keyFromPw, 1);
         const [signingAddr] = ks.getAddresses();
         let s;
         try {
-            s = sigTools_js_1.createSig(ks, signingAddr, keyFromPw, multisigAddr, nonce, 'nextState', destAddr); // TODO dont hardcode method
+            s = sigTools_js_1.createSig(ks, signingAddr, keyFromPw, multisigAddr, nonce, destMethod, destAddr);
             console.log('Signature:');
             console.log(JSON.stringify(s));
         }
@@ -132,7 +141,7 @@ async function sign() {
         }
     });
 }
-async function add() {
+async function _add() {
     if (subcommandNoArgs(argv)) {
         console.log("USAGE");
         console.log("  add -s 0x123 -a 0x456");
@@ -151,7 +160,7 @@ async function add() {
     console.assert(argv.a);
     console.assert(argv.from || argv.f);
     const web3 = new Web3('http://localhost:7545');
-    const instance = new web3.eth.Contract(require('../ethereum/build/contracts/Sp1.json').abi, argv.a, {});
+    const instance = new web3.eth.Contract(require('../ethereum/build/contracts/IHasSubcontracts.json').abi, argv.a, {});
     instance.methods.add(subcontractAddress)
         .send({
         from: argv.from || argv.f,
@@ -162,11 +171,7 @@ async function add() {
         });
     });
 }
-function subcommandNoArgs(argv) {
-    return (argv.h || argv._.length === 1);
-}
-const handlers = new Map();
-handlers.set(Cmd.info, async () => {
+async function _info() {
     if (subcommandNoArgs(argv)) {
         console.log('USAGE');
         console.log('  node cli.js info <address>');
@@ -176,14 +181,23 @@ handlers.set(Cmd.info, async () => {
     const contractAddress = argv._[1];
     console.assert(contractAddress, "please provide an address");
     await info_js_1.info(contractAddress, networkId);
-});
-handlers.set(Cmd.add, add);
-handlers.set(Cmd.send, tx);
-handlers.set(Cmd.help, Help);
-handlers.set(Cmd.sign, sign);
-handlers.set(Cmd.register, register);
-handlers.set(Cmd.sp, handlers.get(Cmd.register));
-handlers.set(Cmd.list, async () => {
+}
+async function _status() {
+    if (argv.h) {
+        console.log('USAGE');
+        console.log('  node cli.js er der styr på det?');
+        return;
+    }
+    const networkId = argv.networkId || '1337';
+    // await info(contractAddress, networkId)
+    const allContracts = await files_js_1.getDeployedContracts2();
+    const web3 = new Web3('http://localhost:7545');
+    allContracts
+        .forEach(contract => {
+        info_js_1.recursiveWalk(contract.address, web3, `Contract`);
+    });
+}
+async function _list() {
     if (argv.h) {
         console.log("USAGE");
         console.log("  node cli.js list");
@@ -194,36 +208,77 @@ handlers.set(Cmd.list, async () => {
     console.log(`CONTRACTS OVERVIEW`);
     console.log("");
     allContracts
-        .map(contract => ({
-        name: `  ${contract.contractName}`,
-        address: `    ${contract.address}`,
-    }))
+        .map(contract => ([
+        `  ${contract.contractName}`,
+        `    ${contract.address}`,
+        `    ${contract.created.substr(0, 10)} ${contract.created_note}`,
+    ]))
         .forEach(vm => Object.values(vm).forEach(val => console.log(val)));
-});
-handlers.set(Cmd.ls, handlers.get(Cmd.list));
-handlers.set(Cmd.create, async () => {
+}
+async function _create() {
     if (subcommandNoArgs(argv)) {
         console.log("USAGE");
-        console.log(`  node.cli create --from 0x123 <contract name> <constructor arguments>`);
+        console.log(`  node.cli create --from 0x123 --message "a test contract" <contract name> <constructor arguments>`);
         console.log(``);
         console.log(`OPTIONS`);
         console.log(`  --from, -f is the sender address`);
+        console.log(`  --message, -m is the administrative note about the contract`);
+        console.log(`  --owners to set up a multisig contract as owner (requires the contracts to implement Owned)`);
+        console.log(`  --json to deserialize every constructor argument as JSON (useful if sending a list)`);
         return;
     }
+    const msg = argv.m || argv.message || argv.msg;
     const from = argv.f || argv.from;
-    console.assert(from, "'create needs --from, -f");
+    console.assert(msg, "Please leave a note for the contract deployment using --message");
+    console.assert(from, "'create' needs --from, -f");
     const tpl = argv._[1];
     console.assert(tpl, "Need a template name");
-    const constructorArgs = argv._.slice(2);
-    console.debug(tpl, constructorArgs);
-    console.info("Creating: ", tpl);
-    console.info("Passing: ", constructorArgs.map(val => `'${val}'`).join(', '));
-    const contract = await create_js_1.create(constructorArgs, tpl, from);
-    if (!argv.n) {
-        await files_js_1.addDeployedContract(tpl, contract.options.address);
+    const constructorArgs = argv._.slice(2) || [];
+    if (argv.json) {
+        constructorArgs.forEach(((value, index, array) => {
+            array[index] = JSON.parse(value);
+        }));
     }
-});
+    const multiSigOwners = argv.owners;
+    let multiSigContractDeployed;
+    console.assert(multiSigOwners === undefined || (Array.isArray(multiSigOwners) && multiSigOwners.length > 1), "specifying multisig with --owners requires at least 2 owners");
+    if (Array.isArray(multiSigOwners)) {
+        console.log("Deploying multisig contract for " + multiSigOwners.length + " owners ...");
+        multiSigContractDeployed = await create_js_1.create('SimpleMultiSig', from, [multiSigOwners.length, multiSigOwners]);
+        constructorArgs.unshift(multiSigContractDeployed.options.address);
+        console.log('');
+    }
+    console.log(`Constructor arguments in applied order (${constructorArgs.length || "none"})`);
+    constructorArgs
+        .map(value => Array.isArray(value) ? JSON.stringify(value) : value + '')
+        .forEach(value => console.log('  ' + value));
+    const contract = await create_js_1.create(tpl, from, constructorArgs);
+    if (!argv.n) {
+        await files_js_1.addDeployedContract(tpl, contract.options.address, msg);
+    }
+    if (multiSigContractDeployed && !argv.n) {
+        const msg = `Multisig contract owning ${contract.options.address}`;
+        await files_js_1.addDeployedContract('SimpleMultiSig', multiSigContractDeployed.options.address, msg);
+    }
+}
+function subcommandNoArgs(argv) {
+    return (argv.h || argv._.length === 1);
+}
+const handlers = new Map();
+handlers.set(Cmd.info, _info);
+handlers.set(Cmd.status, _status);
+handlers.set(Cmd.er, handlers.get(Cmd.status));
+handlers.set(Cmd.add, _add);
+handlers.set(Cmd.send, _tx);
+handlers.set(Cmd.help, _help);
+handlers.set(Cmd.sign, _sign);
+handlers.set(Cmd.register, _register);
+handlers.set(Cmd.sp, handlers.get(Cmd.register));
+handlers.set(Cmd.list, _list);
+handlers.set(Cmd.ls, handlers.get(Cmd.list));
+handlers.set(Cmd.create, _create);
 handlers.set(Cmd.mk, handlers.get(Cmd.create));
 const handler = handlers.get(subcommand) || handlers.get(Cmd.help);
 console.assert(handler, "should have found handler");
-handler();
+handler()
+    .catch(err => console.error(red(err.toString())));

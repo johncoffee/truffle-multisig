@@ -44,3 +44,4 @@ async function recursiveWalk(address, web3, displayName, level = 0) {
         await recursiveWalk(subContractAddress, web3, `${' '.repeat(2 + level * 2)}- subcontract`, level + 1);
     }
 }
+exports.recursiveWalk = recursiveWalk;

@@ -30,12 +30,13 @@ async function getDeployedContracts(networkId) {
     });
 }
 exports.getDeployedContracts = getDeployedContracts;
-async function addDeployedContract(name, address) {
+async function addDeployedContract(name, address, msg) {
     const table = await getDeployedContracts2();
     table.push({
         address: address,
         contractName: name,
         created: new Date().toJSON(),
+        created_note: msg,
     });
     await fs_extra_1.writeJSON(filePath, table, {
         spaces: 2 // JSON formatting
