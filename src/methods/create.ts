@@ -26,7 +26,7 @@ export async function create (template:string, from:string, constructorArguments
       gas: 2000000,
     })
 
-  console.info(`Deployed to ${greenBright(deployed.options.address)}`)
+  console.info(`  deployed to ${greenBright(deployed.options.address)}`)
   return deployed
 }
 
