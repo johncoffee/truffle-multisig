@@ -1,6 +1,6 @@
 import minimist = require('minimist')
 import chalk from 'chalk'
-import { callNextStateMultiSig, createSig, retrieveKeystore, txObj } from './sigTools.js'
+import { multiSigCall, createSig, retrieveKeystore, txObj } from './sigTools.js'
 import { keystore } from 'eth-lightwallet'
 import { addDeployedContract, getDeployedContracts, getDeployedContracts2, savedContract } from './files.js'
 import { create } from './methods/create.js'
@@ -36,11 +36,11 @@ enum Cmd {
   send,
 }
 
-const subcommand:Cmd = Cmd[argv._[0]] as any || Cmd.help
+const subcommand:Cmd|undefined = Cmd[argv._[0]]
 
 
 
-async function Help() {
+async function _help() {
   console.log('USAGE')
   console.log(`  node cli.js <subcommand>`)
   console.log('')
@@ -59,7 +59,7 @@ async function Help() {
   console.log("Try 'node cli.js <subcommand> -h' to learn more about each command")
 }
 
-async function register () {
+async function _register () {
   if (argv.h) {
     console.log("USAGE")
     console.log("  register")
@@ -75,28 +75,31 @@ async function register () {
   console.log("Seed:    "+newSeed)
 }
 
-async function tx () {
+async function _tx () {
   if (subcommandNoArgs(argv)) {
     console.log("USAGE")
-    console.log(`  ${Cmd[Cmd.send]} <sig1> <sig2>`)
+    console.log(`  ${Cmd[Cmd.send]} <sig1> <sig2> --from 0x123 --dest 0x345 --multisig 0x678`)
     console.log("")
     console.log("ARGUMENTS")
     console.log("  two serialized signatures")
     console.log("")
     console.log("OPTIONS")
+    console.log("  --method, -m destination method")
+    console.log("  --dest, -d destination address")
     console.log("  --from, -f from address")
-    console.log("  --multisig, -m multisigAddress address")
-    console.log("  --dest, -d destAddress address")
+    console.log("  --multisig, -u multisigAddress address")
     return
   }
 
-  const destAddress     = argv.d || argv.dest
-  const multisigAddress = argv.m || argv.multisig
-  const from = argv.from || argv.f
+  const destMethod:string = argv.m || argv.method
+  const destAddress:string = argv.d || argv.dest
+  const multisigAddress:string = argv.u || argv.multisig
+  const from:string = argv.from || argv.f
 
-  console.assert(destAddress, "did not find dest address")
-  console.assert(multisigAddress, "did not find MultiSig address")
-  console.assert(from, "did not get from")
+  console.assert(destMethod, "missing dest. method; use --method -m")
+  console.assert(destAddress, "missing dest. address; use --dest -d")
+  console.assert(multisigAddress, "missing multiSig address; use --multisig -u")
+  console.assert(from, "missing from; --from -f")
 
   const sig1 = JSON.parse(argv._[1]) // {"sigV":28,"sigR":"0x7d223c507acf17887340f364f7cf910ec54dfb2f10e08ce5ddc3d60bf9b221b3","sigS":"0x1bdd9f4ba9afd5466b59010746caf55dd396769a1c8a8c001e3ee693276af1d3"}
   const sig2 = JSON.parse(argv._[2]) // {"sigV":28,"sigR":"0x7d223c507acf17887340f364f7cf910ec54dfb2f10e08ce5ddc3d60bf9b221b3","sigS":"0x1bdd9f4ba9afd5466b59010746caf55dd396769a1c8a8c001e3ee693276af1d3"}
@@ -105,11 +108,11 @@ async function tx () {
   new Array(sig1, sig2)
     .forEach((sig, index) => console.assert(sig.sigV && sig.sigR && sig.sigS, index +": missing V, R or S", sig))
 
-  callNextStateMultiSig(sig1, sig2, destAddress, multisigAddress, from)
+  multiSigCall(destMethod, sig1, sig2, destAddress, multisigAddress, from)
 }
 
-async function sign () {
-  if (subcommandNoArgs(argv)) {
+async function _sign () {
+  if (argv.h) {
     console.log("USAGE")
     console.log(`  sign --method testHest --multisig 0x234 --dest 0x345 --from 0x456 --seed "mnemonic .. words"`)
     console.log("")
@@ -159,7 +162,7 @@ async function sign () {
   })
 }
 
-async function add () {
+async function _add () {
   if (subcommandNoArgs(argv)) {
     console.log("USAGE")
     console.log("  add -s 0x123 -a 0x456")
@@ -195,19 +198,7 @@ async function add () {
     })
 }
 
-
-function subcommandNoArgs(argv:ParsedArgs):boolean {
-  return (argv.h || argv._.length === 1)
-}
-
-// router
-
-interface Handler {
-  () : Promise<void>
-}
-const handlers = new Map<Cmd, Handler>()
-
-handlers.set(Cmd.info, async() => {
+async function _info () {
   if (subcommandNoArgs(argv)) {
     console.log('USAGE')
     console.log('  node cli.js info <address>')
@@ -218,9 +209,9 @@ handlers.set(Cmd.info, async() => {
   const contractAddress:string = argv._[1]
   console.assert(contractAddress, "please provide an address")
   await info(contractAddress, networkId)
-})
+}
 
-handlers.set(Cmd.status, async() => {
+async function _status() {
   if (argv.h) {
     console.log('USAGE')
     console.log('  node cli.js er der styr på det?')
@@ -237,18 +228,9 @@ handlers.set(Cmd.status, async() => {
     .forEach(contract => {
       recursiveWalk(contract.address, web3, `Contract`)
     })
-})
-handlers.set(Cmd.er, handlers.get(Cmd.status) as Handler)
+}
 
-handlers.set(Cmd.add, add)
-handlers.set(Cmd.send, tx)
-handlers.set(Cmd.help, Help)
-handlers.set(Cmd.sign, sign)
-
-handlers.set(Cmd.register, register)
-handlers.set(Cmd.sp, handlers.get(Cmd.register) as Handler)
-
-handlers.set(Cmd.list, async () => {
+async function _list() {
   if (argv.h) {
     console.log("USAGE")
     console.log("  node cli.js list")
@@ -267,11 +249,9 @@ handlers.set(Cmd.list, async () => {
       `    ${contract.created.substr(0, 10)} ${contract.created_note}`,
     ]) )
     .forEach(vm => Object.values(vm).forEach(val => console.log(val) ))
-})
-handlers.set(Cmd.ls, handlers.get(Cmd.list) as Handler)
+}
 
-
-handlers.set(Cmd.create, async () => {
+async function _create() {
   if (subcommandNoArgs(argv)) {
     console.log("USAGE")
     console.log(`  node.cli create --from 0x123 --message "a test contract" <contract name> <constructor arguments>`)
@@ -279,12 +259,14 @@ handlers.set(Cmd.create, async () => {
     console.log(`OPTIONS`)
     console.log(`  --from, -f is the sender address`)
     console.log(`  --message, -m is the administrative note about the contract`)
+    console.log(`  --owners to set up a multisig contract as owner (requires the contracts to implement Owned)`)
+    console.log(`  --json to deserialize every constructor argument as JSON (useful if sending a list)`)
     return
   }
 
   const msg = argv.m || argv.message || argv.msg
   const from = argv.f || argv.from
-  console.assert(msg, "Please leave a note for the contract deployment using --msg")
+  console.assert(msg, "Please leave a note for the contract deployment using --message")
   console.assert(from, "'create' needs --from, -f")
 
   const tpl = argv._[1]
@@ -299,7 +281,8 @@ handlers.set(Cmd.create, async () => {
 
   const multiSigOwners:undefined|string[] = argv.owners
   let multiSigContractDeployed
-  if (Array.isArray(multiSigOwners) && multiSigOwners.length > 1) {
+  console.assert(multiSigOwners === undefined || (Array.isArray(multiSigOwners) && multiSigOwners.length > 1), "specifying multisig with --owners requires at least 2 owners")
+  if (Array.isArray(multiSigOwners)) {
     console.log("Deploying multisig contract for "+multiSigOwners.length + " owners ...")
     multiSigContractDeployed = await create('SimpleMultiSig', from, [multiSigOwners.length, multiSigOwners])
     constructorArgs.unshift(multiSigContractDeployed.options.address)
@@ -308,16 +291,49 @@ handlers.set(Cmd.create, async () => {
 
   console.log(`Constructor arguments in applied order (${constructorArgs.length || "none"})`)
   constructorArgs
-    .forEach(value => console.log('  ',JSON.stringify(value)))
+    .map(value => Array.isArray(value) ? JSON.stringify(value) : value + '')
+    .forEach(value => console.log('  ' + value))
 
   const contract = await create(tpl, from, constructorArgs)
-  await addDeployedContract(tpl, contract.options.address, msg)
+  if (!argv.n) {
+    await addDeployedContract(tpl, contract.options.address, msg)
+  }
 
-  if (multiSigContractDeployed) {
+  if (multiSigContractDeployed && !argv.n) {
     const msg = `Multisig contract owning ${contract.options.address}`
     await addDeployedContract('SimpleMultiSig', multiSigContractDeployed.options.address, msg)
   }
-})
+}
+
+
+function subcommandNoArgs(argv:ParsedArgs):boolean {
+  return (argv.h || argv._.length === 1)
+}
+
+// router
+
+interface Handler {
+  () : Promise<void>
+}
+const handlers = new Map<Cmd, Handler>()
+
+handlers.set(Cmd.info, _info)
+
+handlers.set(Cmd.status, _status)
+handlers.set(Cmd.er, handlers.get(Cmd.status) as Handler)
+
+handlers.set(Cmd.add, _add)
+handlers.set(Cmd.send, _tx)
+handlers.set(Cmd.help, _help)
+handlers.set(Cmd.sign, _sign)
+
+handlers.set(Cmd.register, _register)
+handlers.set(Cmd.sp, handlers.get(Cmd.register) as Handler)
+
+handlers.set(Cmd.list, _list)
+handlers.set(Cmd.ls, handlers.get(Cmd.list) as Handler)
+
+handlers.set(Cmd.create, _create)
 
 handlers.set(Cmd.mk, handlers.get(Cmd.create) as Handler)
 

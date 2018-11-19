@@ -55,7 +55,7 @@ export function createSig (ks:keystore, signingAddr:string, keyFromPw:Uint8Array
   return <txObj>{sigV: sigV, sigR: sigR, sigS: sigS}
 }
 
-export function callNextStateMultiSig (sig1:txObj, sig2:txObj, destAddress:string, multisigAddress:string, from:string) {
+export function multiSigCall (method:string, sig1:txObj, sig2:txObj, destAddress:string, multisigAddress:string, from:string) {
   const sigsOrdered:txObj[] = [sig1, sig2] // .sort() // should have been sorted based on sender address
   // validate all input
   sigsOrdered.forEach(sig1 => console.assert(sig1.sigV && sig1.sigR && sig1.sigS, "missing V, R or S", sig1))
@@ -75,7 +75,7 @@ export function callNextStateMultiSig (sig1:txObj, sig2:txObj, destAddress:strin
 
   // Web3 use call because we just reading
   multisigInstance.methods.nonce().call().then(async nonce => {
-    const data = txutils._encodeFunctionTxData('nextState', [], []);// sending data doesn't work https://github.com/ethereum/solidity/issues/2884
+    const data = txutils._encodeFunctionTxData(method, [], []);// sending data doesn't work https://github.com/ethereum/solidity/issues/2884
 
     console.log('nonce ' + nonce);
     // send transaction here, not using .call!
