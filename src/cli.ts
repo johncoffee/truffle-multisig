@@ -16,6 +16,7 @@ const argv = minimist(process.argv.slice(2), {
     'a', 'address',
     'm', 'multisig',
     'd', 'dest',
+    'u',
     'sp', 's',
     'o', 'owners',
     'from', 'f'
@@ -110,11 +111,12 @@ async function tx () {
 async function sign () {
   if (subcommandNoArgs(argv)) {
     console.log("USAGE")
-    console.log("  sign -s 0x123 -m 0x234 -d 0x345 -f 0x456")
+    console.log(`  sign --method testHest --multisig 0x234 --dest 0x345 --from 0x456 --seed "mnemonic .. words"`)
     console.log("")
     console.log("OPTIONS")
-    console.log("  --dest, -d address of the business contract")
-    console.log("  --multisig, -m address of the multisig contract")
+    console.log("  --method, -m destination method")
+    console.log("  --dest, -d destination contract")
+    console.log("  --multisig, -u address of the multisig contract")
     console.log("  --seed, -s seed words to signing HD wallet")
     console.log("  --from, -f transaction from address")
     return
@@ -122,7 +124,8 @@ async function sign () {
 
   const seedPhrase = argv.s || argv.seed
   const password = argv.p || argv.password || ''
-  const multisigAddr = argv.m || argv.multisig
+  const multisigAddr = argv.u || argv.multisig
+  const destMethod = argv.m || argv.method
 
   console.assert(seedPhrase, "need seedPhrase")
   console.assert(multisigAddr, "need multisigAddr")
@@ -144,7 +147,7 @@ async function sign () {
     const [signingAddr] = ks.getAddresses()
     let s:txObj
     try {
-      s = createSig(ks, signingAddr, keyFromPw, multisigAddr, nonce, 'nextState', destAddr) // TODO dont hardcode method
+      s = createSig(ks, signingAddr, keyFromPw, multisigAddr, nonce, destMethod, destAddr)
       console.log('Signature:')
       console.log(JSON.stringify(s))
     }
